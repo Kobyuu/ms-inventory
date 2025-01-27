@@ -1,14 +1,13 @@
 import { Sequelize } from 'sequelize-typescript';
-import dotenv from 'dotenv';
 import colors from 'colors';
-dotenv.config();
+import { config } from './env';
 
 // Validar la URL de la base de datos
-if (!process.env.DATABASE_URL) {
+if (!config.databaseUrl) {
     throw new Error('DATABASE_URL no está definida en el archivo .env');
 }
 
-export const db = new Sequelize(process.env.DATABASE_URL, {
+export const db = new Sequelize(config.databaseUrl, {
     models: [`${__dirname}/../models`], // Adaptación para TypeScript/JavaScript en producción
     logging: false,
 });
