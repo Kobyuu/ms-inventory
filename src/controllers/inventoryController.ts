@@ -3,6 +3,7 @@ import inventoryService from '../services/inventoryService';
 import axiosClient from '../config/axiosClient';
 import { config } from '../config/env';
 import { errorMessages, successMessages } from '../config/messages';
+import { INPUT_OUTPUT } from '../config/constants';
 
 class InventoryController {
   static async getAllStocks(req: Request, res: Response): Promise<Response> {
@@ -31,7 +32,7 @@ class InventoryController {
 
   static async addStock(req: Request, res: Response): Promise<Response> {
     const { product_id, quantity, input_output } = req.body;
-    if (!product_id || quantity <= 0 || input_output !== 1) {
+    if (!product_id || quantity <= 0 || input_output !== INPUT_OUTPUT.INPUT) {
       return res.status(400).json({
         message: errorMessages.inputOutput,
       });
@@ -58,7 +59,7 @@ class InventoryController {
 
   static async updateStock(req: Request, res: Response): Promise<Response> {
     const { product_id, quantity, input_output } = req.body;
-    if (!product_id || quantity <= 0 || (input_output !== 1 && input_output !== 2)) {
+    if (!product_id || quantity <= 0 || (input_output !== INPUT_OUTPUT.INPUT && input_output !== INPUT_OUTPUT.OUTPUT)) {
       return res.status(400).json({ message: errorMessages.invalidData });
     }
 
