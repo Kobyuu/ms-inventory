@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { config } from './env';
+import { errorMessages } from './messages';
 
 const axiosClient = axios.create({
   baseURL: config.productServiceUrl,
@@ -9,7 +10,7 @@ const axiosClient = axios.create({
 axiosClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error('Error en la solicitud HTTP:', error);
+    console.error(errorMessages.httpRequest, error);
     return Promise.reject(error);
   }
 );

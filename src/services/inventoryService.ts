@@ -3,17 +3,20 @@ import Stock from '../models/Inventory.model';
 import db from '../config/db';
 import redisClient from '../config/redis';
 import { config } from '../config/env';
+import { errorMessages, successMessages } from '../config/messages';
 
 class InventoryService {
   async getAllStocks() {
     const cacheKey = 'allStocks';
     const cachedStocks = await redisClient.get(cacheKey);
     if (cachedStocks) {
+      console.log(successMessages.allStocksFetched);
       return JSON.parse(cachedStocks);
     }
 
     const stocks = await Stock.findAll();
     await redisClient.set(cacheKey, JSON.stringify(stocks), 'EX', config.cacheExpiry);
+    console.log(successMessages.allStocksFetched);
     return stocks;
   }
 
@@ -21,12 +24,14 @@ class InventoryService {
     const cacheKey = `stock:${product_id}`;
     const cachedStock = await redisClient.get(cacheKey);
     if (cachedStock) {
+      console.log(successMessages.stockFetched);
       return JSON.parse(cachedStock);
     }
 
     const stock = await Stock.findOne({ where: { product_id } });
     if (stock) {
       await redisClient.set(cacheKey, JSON.stringify(stock), 'EX', config.cacheExpiry);
+      console.log(successMessages.stockFetched);
     }
     return stock;
   }
@@ -53,6 +58,7 @@ class InventoryService {
       await transaction.commit();
       await redisClient.del(`stock:${product_id}`);
       await redisClient.del('allStocks');
+      console.log(successMessages.stockAdded);
       return updatedStock;
     } catch (error) {
       await transaction.rollback();
@@ -66,7 +72,7 @@ class InventoryService {
       const stock = await Stock.findOne({ where: { product_id }, transaction });
       if (!stock) {
         await transaction.rollback();
-        throw new Error('Registro de stock no encontrado');
+        throw new Error(errorMessages.stockNotFound);
       }
 
       if (input_output === 1) {
@@ -74,7 +80,7 @@ class InventoryService {
       } else if (input_output === 2) {
         if (stock.quantity < quantity) {
           await transaction.rollback();
-          throw new Error('Cantidad insuficiente de stock para esta salida');
+          throw new Error(errorMessages.insufficientStock);
         }
         stock.quantity -= quantity;
       }
@@ -83,6 +89,7 @@ class InventoryService {
       await transaction.commit();
       await redisClient.del(`stock:${product_id}`);
       await redisClient.del('allStocks');
+      console.log(successMessages.stockUpdated);
       return updatedStock;
     } catch (error) {
       await transaction.rollback();
@@ -96,7 +103,7 @@ class InventoryService {
       const stock = await Stock.findOne({ where: { product_id }, transaction });
       if (!stock) {
         await transaction.rollback();
-        throw new Error('Stock no encontrado');
+        throw new Error(errorMessages.stockNotFound);
       }
 
       const previousReduction = await Stock.findOne({
@@ -106,7 +113,7 @@ class InventoryService {
 
       if (!previousReduction || previousReduction.quantity < quantity) {
         await transaction.rollback();
-        throw new Error('No hay suficientes registros de reducción para revertir esta cantidad');
+        throw new Error(errorMessages.insufficientReductionRecords);
       }
 
       stock.quantity += quantity;
@@ -119,6 +126,7 @@ class InventoryService {
       await transaction.commit();
       await redisClient.del(`stock:${product_id}`);
       await redisClient.del('allStocks');
+      console.log(successMessages.stockReverted);
       return { updatedStock, revertLog };
     } catch (error) {
       await transaction.rollback();
