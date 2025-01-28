@@ -10,7 +10,6 @@ import {
     tableName: 'stock',
     timestamps: true, // createdAt, updatedAt
 })
-
 class Stock extends Model {
     @Column({
         type: DataType.INTEGER,

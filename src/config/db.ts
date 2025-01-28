@@ -1,22 +1,26 @@
 import { Sequelize } from 'sequelize-typescript';
+import dotenv from 'dotenv';
 import colors from 'colors';
-import { config } from './env';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from './constants';
 
-// Validar la URL de la base de datos
-if (!config.databaseUrl) {
+dotenv.config();
+
+console.log('DATABASE_URL:', process.env.DATABASE_URL);
+
+if (!process.env.DATABASE_URL) {
     throw new Error(ERROR_MESSAGES.DB_URL_NOT_DEFINED);
 }
 
-export const db = new Sequelize(config.databaseUrl, {
-    models: [`${__dirname}/../models`], // Adaptación para TypeScript/JavaScript en producción
-    logging: false,
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+  dialect: 'postgres',
+  models: [__dirname + '/../models/**/*.ts'], // Cargar todos los modelos
+  logging: false,
 });
 
 export async function connectDb(): Promise<void> {
     try {
-        await db.authenticate();
-        await db.sync(); // Sincroniza el esquema
+        await sequelize.authenticate();
+        await sequelize.sync(); // Sincroniza el esquema
         console.log(colors.bgGreen.white(SUCCESS_MESSAGES.DB_CONNECTION));
     } catch (error) {
         console.error(colors.bgRed.white(ERROR_MESSAGES.DB_CONNECTION), error);
@@ -24,4 +28,4 @@ export async function connectDb(): Promise<void> {
     }
 }
 
-export default db;
+export default sequelize;
