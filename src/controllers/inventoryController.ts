@@ -2,17 +2,16 @@ import { Request, Response } from 'express';
 import inventoryService from '../services/inventoryService';
 import axiosClient from '../config/axiosClient';
 import { config } from '../config/env';
-import { errorMessages, successMessages } from '../config/messages';
-import { INPUT_OUTPUT } from '../config/constants';
+import { ERROR_MESSAGES, SUCCESS_MESSAGES, INPUT_OUTPUT, HTTP } from '../config/constants';
 
 class InventoryController {
   static async getAllStocks(req: Request, res: Response): Promise<Response> {
     try {
       const stocks = await inventoryService.getAllStocks();
-      return res.status(200).json(stocks);
+      return res.status(HTTP.OK).json(stocks);
     } catch (error) {
-      console.error(errorMessages.getAllStocks, error);
-      return res.status(500).json({ message: errorMessages.getAllStocks, error });
+      console.error(ERROR_MESSAGES.GET_ALL_STOCKS, error);
+      return res.status(HTTP.INTERNAL_SERVER_ERROR).json({ message: ERROR_MESSAGES.GET_ALL_STOCKS, error });
     }
   }
 
@@ -21,20 +20,20 @@ class InventoryController {
     try {
       const stock = await inventoryService.getStockByProductId(Number(product_id));
       if (!stock) {
-        return res.status(404).json({ message: errorMessages.stockNotFound });
+        return res.status(HTTP.NOT_FOUND).json({ message: ERROR_MESSAGES.STOCK_NOT_FOUND });
       }
-      return res.status(200).json(stock);
+      return res.status(HTTP.OK).json(stock);
     } catch (error) {
-      console.error(errorMessages.getStockByProductId, error);
-      return res.status(500).json({ message: errorMessages.getStockByProductId, error });
+      console.error(ERROR_MESSAGES.GET_STOCK_BY_PRODUCT_ID, error);
+      return res.status(HTTP.INTERNAL_SERVER_ERROR).json({ message: ERROR_MESSAGES.GET_STOCK_BY_PRODUCT_ID, error });
     }
   }
 
   static async addStock(req: Request, res: Response): Promise<Response> {
     const { product_id, quantity, input_output } = req.body;
     if (!product_id || quantity <= 0 || input_output !== INPUT_OUTPUT.INPUT) {
-      return res.status(400).json({
-        message: errorMessages.inputOutput,
+      return res.status(HTTP.BAD_REQUEST).json({
+        message: ERROR_MESSAGES.INPUT_OUTPUT,
       });
     }
 
@@ -42,63 +41,43 @@ class InventoryController {
       const productServiceUrl = `${config.productServiceUrl}/${product_id}`;
       const productResponse = await axiosClient.get(productServiceUrl);
 
-      if (productResponse.status !== 200) {
-        return res.status(404).json({ message: errorMessages.productNotFound });
+      if (productResponse.status !== HTTP.OK) {
+        return res.status(HTTP.NOT_FOUND).json({ message: ERROR_MESSAGES.PRODUCT_NOT_FOUND });
       }
 
       const updatedStock = await inventoryService.addStock(product_id, quantity, input_output);
-      return res.status(201).json({
-        message: successMessages.stockAdded,
+      return res.status(HTTP.CREATED).json({
+        message: SUCCESS_MESSAGES.STOCK_ADDED,
         updatedStock
       });
     } catch (error) {
-      console.error(errorMessages.addStock, error);
-      return res.status(500).json({ message: errorMessages.addStock, error });
+      console.error(ERROR_MESSAGES.ADD_STOCK, error);
+      return res.status(HTTP.INTERNAL_SERVER_ERROR).json({ message: ERROR_MESSAGES.ADD_STOCK, error });
     }
   }
 
   static async updateStock(req: Request, res: Response): Promise<Response> {
     const { product_id, quantity, input_output } = req.body;
     if (!product_id || quantity <= 0 || (input_output !== INPUT_OUTPUT.INPUT && input_output !== INPUT_OUTPUT.OUTPUT)) {
-      return res.status(400).json({ message: errorMessages.invalidData });
+      return res.status(HTTP.BAD_REQUEST).json({ message: ERROR_MESSAGES.INVALID_DATA });
     }
 
     try {
       const productServiceUrl = `${config.productServiceUrl}/${product_id}`;
       const productResponse = await axiosClient.get(productServiceUrl);
 
-      if (productResponse.status !== 200) {
-        return res.status(404).json({ message: errorMessages.productNotFound });
+      if (productResponse.status !== HTTP.OK) {
+        return res.status(HTTP.NOT_FOUND).json({ message: ERROR_MESSAGES.PRODUCT_NOT_FOUND });
       }
 
       const updatedStock = await inventoryService.updateStock(product_id, quantity, input_output);
-      return res.status(200).json({
-        message: successMessages.stockUpdated,
+      return res.status(HTTP.OK).json({
+        message: SUCCESS_MESSAGES.STOCK_UPDATED,
         updatedStock
       });
     } catch (error) {
-      console.error(errorMessages.updateStock, error);
-      return res.status(500).json({ message: errorMessages.updateStock, error });
-    }
-  }
-
-  static async revertPurchase(req: Request, res: Response): Promise<Response> {
-    const { product_id } = req.params;
-    const { quantity } = req.body;
-
-    if (!product_id || quantity <= 0) {
-      return res.status(400).json({ message: errorMessages.quantity });
-    }
-
-    try {
-      const result = await inventoryService.revertPurchase(Number(product_id), quantity);
-      return res.status(200).json({
-        message: successMessages.stockReverted,
-        ...result,
-      });
-    } catch (error) {
-      console.error(errorMessages.revertPurchase, error);
-      return res.status(500).json({ message: errorMessages.revertPurchase, error });
+      console.error(ERROR_MESSAGES.UPDATE_STOCK, error);
+      return res.status(HTTP.INTERNAL_SERVER_ERROR).json({ message: ERROR_MESSAGES.UPDATE_STOCK, error });
     }
   }
 }

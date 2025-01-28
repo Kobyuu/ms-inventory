@@ -1,6 +1,6 @@
 import circuitBreaker from 'opossum';
 import express from 'express';
-import { errorMessages } from '../config/messages';
+import { ERROR_MESSAGES, HTTP } from '../config/constants';
 
 const breakerOptions = {
   timeout: 3000, // Si una solicitud toma más de 3 segundos, se considera fallida
@@ -14,7 +14,7 @@ const breaker = new circuitBreaker(async (req: express.Request, res: express.Res
 
 const circuitBreakerMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
   breaker.fire(req, res, next).catch((err) => {
-    res.status(503).json({ message: errorMessages.serviceUnavailable });
+    res.status(HTTP.SERVICE_UNAVAILABLE).json({ message: ERROR_MESSAGES.SERVICE_UNAVAILABLE });
   });
 };
 

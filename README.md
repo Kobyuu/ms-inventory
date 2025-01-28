@@ -30,7 +30,7 @@ Este microservicio permite gestionar el inventario de productos, incluyendo la a
     NODE_ENV=development
 
     # Configuración de la base de datos
-    DATABASE_URL=postgres://usuario:contraseña@localhost:5432/ms-inventory
+    DATABASE_URL=postgres://postgres:password@localhost:5432/ms-inventory
 
     # URL del servicio de productos
     PRODUCT_SERVICE_URL=http://localhost:4001/api/products
@@ -40,10 +40,6 @@ Este microservicio permite gestionar el inventario de productos, incluyendo la a
 
     # Expiración de la caché en segundos
     CACHE_EXPIRY=3600
-
-    # Mensajes de error personalizados
-    ERROR_INPUT_OUTPUT=entrada/salida debe ser 1 (entrada) o 2 (salida)
-    ERROR_QUANTITY=La cantidad debe ser mayor que 0
     ```
 
 ## Uso

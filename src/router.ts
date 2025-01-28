@@ -16,7 +16,4 @@ router.post('/', handleInputErrors, InventoryController.addStock);
 // Modificar la cantidad en el inventario con validación
 router.put('/update', handleInputErrors, InventoryController.updateStock);
 
-// Revertir la compra y actualizar el stock
-router.put('/revert/:product_id', handleInputErrors, InventoryController.revertPurchase);
-
 export default router;
