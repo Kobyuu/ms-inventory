@@ -1,4 +1,4 @@
-import { config } from './config/env';
+import { config } from './config/enviroment';
 import colors from 'colors';
 import server from './server';
 import { DYNAMIC_MESSAGES } from './config/constants';

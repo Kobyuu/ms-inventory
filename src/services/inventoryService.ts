@@ -1,8 +1,8 @@
 import Stock from '../models/Inventory.model';
 import db from '../config/db';
 import redisClient from '../config/redis';
-import { config } from '../config/env';
-import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '../config/constants/messages';
+import { config } from '../config/enviroment';
+import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '../config/constants';
 
 class InventoryService {
   async getAllStocks() {

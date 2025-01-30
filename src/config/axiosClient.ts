@@ -1,6 +1,6 @@
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
-import { config } from './env';
+import { config } from './enviroment';
 import { ERROR_MESSAGES } from './constants';
 
 const axiosClient = axios.create({

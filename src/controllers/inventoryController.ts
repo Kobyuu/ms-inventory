@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import inventoryService from '../services/inventoryService';
 import axiosClient from '../config/axiosClient';
-import { config } from '../config/env';
+import { config } from '../config/enviroment';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES, INPUT_OUTPUT, HTTP } from '../config/constants';
 
 class InventoryController {

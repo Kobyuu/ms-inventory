@@ -1,6 +1,6 @@
 import Redis from 'ioredis';
 import RedisMock from 'ioredis-mock';
-import { config } from './env';
+import { config } from './enviroment';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from './constants';
 
 const redisClient = process.env.NODE_ENV === 'test' ? new RedisMock() : new Redis(config.redisUrl);

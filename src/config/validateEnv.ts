@@ -1,5 +1,5 @@
 import 'dotenv/config'; // Cargar las variables de entorno al inicio
-import { ERROR_MESSAGES } from './constants/messages';
+import { ERROR_MESSAGES } from './constants';
 
 // Validar las variables de entorno requeridas
 ['DATABASE_URL', 'PRODUCT_SERVICE_URL', 'REDIS_URL'].forEach((env) => {
