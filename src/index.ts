@@ -1,3 +1,4 @@
+import 'reflect-metadata'
 import { config } from './config/enviroment';
 import colors from 'colors';
 import server from './server';
