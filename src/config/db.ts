@@ -14,7 +14,6 @@ if (!process.env.DATABASE_URL) {
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
   dialect: 'postgres',
   models: [__dirname + '/../models/**/*.ts'], // Cargar todos los modelos
-  logging: false,
 });
 
 export async function connectDb(): Promise<void> {
