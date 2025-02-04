@@ -1,41 +1,46 @@
 version: '3.8'
 
 services:
-  db:
+  postgres:
     image: postgres:15
-    container_name: ms_inventory_db
+    container_name: ms-inventory_postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: ms_inventory
+      POSTGRES_DB: ms-inventory
     ports:
-      - "6432:5432" 
+      - "6432:5432"
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
 
   redis:
     image: redis:7
-    container_name: ms_inventory_redis
+    container_name: ms-inventory_redis
     ports:
-      - "7379:6379" 
+      - "7379:6379"
 
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: ms_inventory_app
+    container_name: ms-inventory_app
     environment:
       PORT: 4002
       NODE_ENV: production
-      DATABASE_URL: postgres://postgres:password@db:5432/ms_inventory
-      PRODUCT_SERVICE_URL: http://ms_catalog:4001/api/products
+      DATABASE_URL: postgres://postgres:password@postgres:5432/ms-inventory
+      PRODUCT_SERVICE_URL: http://ms-catalog:4001/api/products
       REDIS_URL: redis://redis:6379
       CACHE_EXPIRY: 3600
+      RETRY_ATTEMPTS: 3
+      RETRY_DELAY: 1000
     ports:
       - "5002:4002"
     depends_on:
-      - db
+      - postgres
       - redis
+    volumes:
+      - .:/app
+    command: npm run dev
 
 volumes:
-  db_data:
+  postgres_data:

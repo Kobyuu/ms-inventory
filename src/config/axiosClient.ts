@@ -1,6 +1,6 @@
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
-import { config } from './enviroment';
+import { config } from './constants/enviroment';
 import { ERROR_MESSAGES } from './constants';
 
 const axiosClient = axios.create({
@@ -10,10 +10,10 @@ const axiosClient = axios.create({
 
 // Configurar axios-retry
 axiosRetry(axiosClient, {
-  retries: 3, // Número de reintentos
+  retries: config.retryAttempts, // Número de reintentos
   retryDelay: (retryCount) => {
     console.log(`Intento de reintento: ${retryCount}`);
-    return retryCount * 1000; // Retraso entre reintentos (en milisegundos)
+    return retryCount * config.retryDelay; // Retraso entre reintentos (en milisegundos)
   },
   retryCondition: (error) => {
     // Reintentar solo si es un error de red o un error 5xx

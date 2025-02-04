@@ -8,12 +8,18 @@ const breakerOptions = {
   resetTimeout: 30000, // El circuito se cierra después de 30 segundos
 };
 
-const breaker = new circuitBreaker(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+// Función que maneja la lógica del Circuit Breaker
+const breakerFunction = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  // Aquí puedes agregar la lógica específica que deseas proteger con el Circuit Breaker
   next();
-}, breakerOptions);
+};
 
+const breaker = new circuitBreaker(breakerFunction, breakerOptions);
+
+// Middleware del Circuit Breaker
 const circuitBreakerMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
   breaker.fire(req, res, next).catch((err) => {
+    console.error('Circuit Breaker Error:', err);
     res.status(HTTP.SERVICE_UNAVAILABLE).json({ message: ERROR_MESSAGES.SERVICE_UNAVAILABLE });
   });
 };

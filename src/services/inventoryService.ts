@@ -1,36 +1,35 @@
 import Stock from '../models/Inventory.model';
 import db from '../config/db';
-import redisClient from '../config/redis';
-import { config } from '../config/enviroment';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '../config/constants';
+import { getFromCache, setToCache, logSuccessMessage, clearCache } from '../utils/utils';
 
 class InventoryService {
   async getAllStocks() {
     const cacheKey = 'allStocks';
-    const cachedStocks = await redisClient.get(cacheKey);
+    const cachedStocks = await getFromCache(cacheKey);
     if (cachedStocks) {
-      console.log(SUCCESS_MESSAGES.ALL_STOCKS_FETCHED);
-      return JSON.parse(cachedStocks);
+      logSuccessMessage(SUCCESS_MESSAGES.ALL_STOCKS_FETCHED);
+      return cachedStocks;
     }
 
     const stocks = await Stock.findAll();
-    await redisClient.set(cacheKey, JSON.stringify(stocks), 'EX', config.cacheExpiry);
-    console.log(SUCCESS_MESSAGES.ALL_STOCKS_FETCHED);
+    await setToCache(cacheKey, stocks);
+    logSuccessMessage(SUCCESS_MESSAGES.ALL_STOCKS_FETCHED);
     return stocks;
   }
 
   async getStockByProductId(product_id: number) {
     const cacheKey = `stock:${product_id}`;
-    const cachedStock = await redisClient.get(cacheKey);
+    const cachedStock = await getFromCache(cacheKey);
     if (cachedStock) {
-      console.log(SUCCESS_MESSAGES.STOCK_FETCHED);
-      return JSON.parse(cachedStock);
+      logSuccessMessage(SUCCESS_MESSAGES.STOCK_FETCHED);
+      return cachedStock;
     }
 
     const stock = await Stock.findOne({ where: { product_id } });
     if (stock) {
-      await redisClient.set(cacheKey, JSON.stringify(stock), 'EX', config.cacheExpiry);
-      console.log(SUCCESS_MESSAGES.STOCK_FETCHED);
+      await setToCache(cacheKey, stock);
+      logSuccessMessage(SUCCESS_MESSAGES.STOCK_FETCHED);
     }
     return stock;
   }
@@ -55,9 +54,8 @@ class InventoryService {
       }
 
       await transaction.commit();
-      await redisClient.del(`stock:${product_id}`);
-      await redisClient.del('allStocks');
-      console.log(SUCCESS_MESSAGES.STOCK_ADDED);
+      await clearCache([`stock:${product_id}`, 'allStocks']);
+      logSuccessMessage(SUCCESS_MESSAGES.STOCK_ADDED);
       return updatedStock;
     } catch (error) {
       await transaction.rollback();
@@ -82,13 +80,15 @@ class InventoryService {
           throw new Error(ERROR_MESSAGES.INSUFFICIENT_STOCK);
         }
         stock.quantity -= quantity;
+      } else {
+        await transaction.rollback();
+        throw new Error(ERROR_MESSAGES.INVALID_DATA);
       }
 
       const updatedStock = await stock.save({ transaction });
       await transaction.commit();
-      await redisClient.del(`stock:${product_id}`);
-      await redisClient.del('allStocks');
-      console.log(SUCCESS_MESSAGES.STOCK_UPDATED);
+      await clearCache([`stock:${product_id}`, 'allStocks']);
+      logSuccessMessage(SUCCESS_MESSAGES.STOCK_UPDATED);
       return updatedStock;
     } catch (error) {
       await transaction.rollback();

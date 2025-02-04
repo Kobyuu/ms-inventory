@@ -13,6 +13,9 @@ RUN npm install
 # Copiar el resto del código de la aplicación
 COPY . .
 
+# Copiar el archivo .env
+COPY .env .env
+
 # Compilar TypeScript a JavaScript
 RUN npm run build
 
