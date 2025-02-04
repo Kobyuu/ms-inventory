@@ -17,7 +17,9 @@ export const ERROR_MESSAGES = {
     REDIS_CONNECTION: 'Error en Redis',
     INSUFFICIENT_REDUCTION_RECORDS: 'No hay suficientes registros de reducción para revertir esta cantidad',
     RATE_LIMIT_EXCEEDED: 'Demasiadas solicitudes desde esta IP, por favor intente de nuevo más tarde.',
-    SERVICE_UNAVAILABLE: 'Servicio no disponible, por favor intente de nuevo más tarde.'
+    SERVICE_UNAVAILABLE: 'Servicio no disponible, por favor intente de nuevo más tarde.',
+    INVALID_OPERATION: 'Operacion invalida',
+    UNKNOWN_ERROR: 'Error desconocido'
 };
 
 export const SUCCESS_MESSAGES = {

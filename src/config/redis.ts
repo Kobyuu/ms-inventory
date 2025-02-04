@@ -1,15 +1,36 @@
 import Redis from 'ioredis';
 import RedisMock from 'ioredis-mock';
 import { config } from './constants/enviroment';
-import { ERROR_MESSAGES, SUCCESS_MESSAGES } from './constants';
+import { ERROR_MESSAGES, SUCCESS_MESSAGES, DEFAULTS } from './constants';
 
-const redisClient = process.env.NODE_ENV === 'test' ? new RedisMock() : new Redis({
-  host: config.redisUrl.split(':')[0],
-  port: parseInt(config.redisUrl.split(':')[1], 10),
-  retryStrategy: (times) => {
-    return Math.min(times * 50, 2000);
+const parseRedisUrl = (url: string) => {
+  try {
+    const redisUrl = new URL(url);
+    return {
+      host: redisUrl.hostname || DEFAULTS.REDIS_HOST,
+      port: parseInt(redisUrl.port || DEFAULTS.REDIS_PORT.toString(), 10)
+    };
+  } catch (error) {
+    console.error('Error parsing Redis URL:', error);
+    // Valores por defecto si hay error en el parsing
+    return {
+      host: DEFAULTS.REDIS_HOST,
+      port: DEFAULTS.REDIS_PORT
+    };
   }
-});
+};
+
+const redisConfig = parseRedisUrl(config.redisUrl);
+
+const redisClient = process.env.NODE_ENV === 'test' 
+  ? new RedisMock() 
+  : new Redis({
+      host: redisConfig.host,
+      port: redisConfig.port,
+      retryStrategy: (times) => {
+        return Math.min(times * 50, DEFAULTS.REDIS_RETRY_DELAY);
+      }
+    });
 
 redisClient.on('connect', () => {
   console.log(SUCCESS_MESSAGES.REDIS_CONNECTION);

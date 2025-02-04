@@ -1,7 +1,8 @@
 import express from 'express';
 import router from './router';
 import limiter from './middleware/rateLimiter';
-import circuitBreakerMiddleware from './middleware/circuitBreaker';
+import { handleInputErrors } from './middleware/handleInputErrors';
+import { validateInputOutput, validateQuantity, validateProductId } from './middleware/validateInventory';
 
 // Instancia de express
 const server = express();
@@ -11,9 +12,6 @@ server.use(express.json());
 
 // Configuración de limitador de tasa
 server.use(limiter);
-
-// Configuración de circuito de interrupción
-server.use(circuitBreakerMiddleware);
 
 // Configuración de rutas
 server.use('/api/inventory', router);

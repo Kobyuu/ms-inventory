@@ -2,6 +2,7 @@ import { Sequelize } from 'sequelize-typescript';
 import dotenv from 'dotenv';
 import colors from 'colors';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from './constants';
+import { DatabaseService } from '../types/types';
 
 dotenv.config();
 
@@ -13,7 +14,7 @@ if (!process.env.DATABASE_URL) {
 
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
   dialect: 'postgres',
-  models: [__dirname + '/../models/**/*.ts'], // Cargar todos los modelos,
+  models: [__dirname + '/../models/**/*.ts'], // Cargar todos los modelos
 });
 
 export async function connectDb(): Promise<void> {
@@ -27,4 +28,11 @@ export async function connectDb(): Promise<void> {
     }
 }
 
+class SequelizeDatabaseService implements DatabaseService {
+  async transaction(): Promise<any> {
+    return sequelize.transaction();
+  }
+}
+
+export const dbService = new SequelizeDatabaseService();
 export default sequelize;

@@ -1,41 +1,55 @@
+import { StockResponse } from '../types/types';
 import Stock from '../models/Inventory.model';
-import db from '../config/db';
+import { dbService } from '../config/db';
+import { cacheService } from '../utils/utils';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '../config/constants';
-import { getFromCache, setToCache, logSuccessMessage, clearCache } from '../utils/utils';
 
 class InventoryService {
-  async getAllStocks() {
+  async getAllStocks(): Promise<StockResponse> {
     const cacheKey = 'allStocks';
-    const cachedStocks = await getFromCache(cacheKey);
-    if (cachedStocks) {
-      logSuccessMessage(SUCCESS_MESSAGES.ALL_STOCKS_FETCHED);
-      return cachedStocks;
-    }
+    try {
+      // Intentar obtener los datos desde la caché
+      const cachedStocks = await cacheService.getFromCache(cacheKey);
+      if (cachedStocks) {
+        return { data: cachedStocks, message: SUCCESS_MESSAGES.ALL_STOCKS_FETCHED };
+      }
 
-    const stocks = await Stock.findAll();
-    await setToCache(cacheKey, stocks);
-    logSuccessMessage(SUCCESS_MESSAGES.ALL_STOCKS_FETCHED);
-    return stocks;
+      // Obtener los datos desde la base de datos
+      const stocks = await Stock.findAll();
+      // Almacenar los datos en la caché
+      await cacheService.setToCache(cacheKey, stocks);
+      return { data: stocks, message: SUCCESS_MESSAGES.ALL_STOCKS_FETCHED };
+    } catch (error) {
+      console.error(ERROR_MESSAGES.GET_ALL_STOCKS, error);
+      return { error: ERROR_MESSAGES.GET_ALL_STOCKS, statusCode: 500 };
+    }
   }
 
-  async getStockByProductId(product_id: number) {
+  async getStockByProductId(product_id: number): Promise<StockResponse> {
     const cacheKey = `stock:${product_id}`;
-    const cachedStock = await getFromCache(cacheKey);
-    if (cachedStock) {
-      logSuccessMessage(SUCCESS_MESSAGES.STOCK_FETCHED);
-      return cachedStock;
-    }
+    try {
+      // Intentar obtener los datos desde la caché
+      const cachedStock = await cacheService.getFromCache(cacheKey);
+      if (cachedStock) {
+        return { data: cachedStock, message: SUCCESS_MESSAGES.STOCK_FETCHED };
+      }
 
-    const stock = await Stock.findOne({ where: { product_id } });
-    if (stock) {
-      await setToCache(cacheKey, stock);
-      logSuccessMessage(SUCCESS_MESSAGES.STOCK_FETCHED);
+      // Obtener los datos desde la base de datos
+      const stock = await Stock.findOne({ where: { product_id } });
+      if (stock) {
+        // Almacenar los datos en la caché
+        await cacheService.setToCache(cacheKey, stock);
+        return { data: stock, message: SUCCESS_MESSAGES.STOCK_FETCHED };
+      }
+      return { error: ERROR_MESSAGES.STOCK_NOT_FOUND, statusCode: 404 };
+    } catch (error) {
+      console.error(ERROR_MESSAGES.GET_STOCK_BY_PRODUCT_ID, error);
+      return { error: ERROR_MESSAGES.GET_STOCK_BY_PRODUCT_ID, statusCode: 500 };
     }
-    return stock;
   }
 
-  async addStock(product_id: number, quantity: number, input_output: number) {
-    const transaction = await db.transaction();
+  async addStock(product_id: number, quantity: number, input_output: number): Promise<StockResponse> {
+    const transaction = await dbService.transaction();
     try {
       const existingStock = await Stock.findOne({
         where: { product_id, input_output: 1 },
@@ -54,22 +68,22 @@ class InventoryService {
       }
 
       await transaction.commit();
-      await clearCache([`stock:${product_id}`, 'allStocks']);
-      logSuccessMessage(SUCCESS_MESSAGES.STOCK_ADDED);
-      return updatedStock;
+      await cacheService.clearCache([`stock:${product_id}`, 'allStocks']);
+      return { data: updatedStock, message: SUCCESS_MESSAGES.STOCK_ADDED };
     } catch (error) {
       await transaction.rollback();
-      throw error;
+      console.error(ERROR_MESSAGES.ADD_STOCK, error);
+      return { error: ERROR_MESSAGES.ADD_STOCK, statusCode: 500 };
     }
   }
 
-  async updateStock(product_id: number, quantity: number, input_output: number) {
-    const transaction = await db.transaction();
+  async updateStock(product_id: number, quantity: number, input_output: number): Promise<StockResponse> {
+    const transaction = await dbService.transaction();
     try {
       const stock = await Stock.findOne({ where: { product_id }, transaction });
       if (!stock) {
         await transaction.rollback();
-        throw new Error(ERROR_MESSAGES.STOCK_NOT_FOUND);
+        return { error: ERROR_MESSAGES.STOCK_NOT_FOUND, statusCode: 404 };
       }
 
       if (input_output === 1) {
@@ -77,22 +91,22 @@ class InventoryService {
       } else if (input_output === 2) {
         if (stock.quantity < quantity) {
           await transaction.rollback();
-          throw new Error(ERROR_MESSAGES.INSUFFICIENT_STOCK);
+          return { error: ERROR_MESSAGES.INSUFFICIENT_STOCK, statusCode: 400 };
         }
         stock.quantity -= quantity;
       } else {
         await transaction.rollback();
-        throw new Error(ERROR_MESSAGES.INVALID_DATA);
+        return { error: ERROR_MESSAGES.INVALID_DATA, statusCode: 400 };
       }
 
       const updatedStock = await stock.save({ transaction });
       await transaction.commit();
-      await clearCache([`stock:${product_id}`, 'allStocks']);
-      logSuccessMessage(SUCCESS_MESSAGES.STOCK_UPDATED);
-      return updatedStock;
+      await cacheService.clearCache([`stock:${product_id}`, 'allStocks']);
+      return { data: updatedStock, message: SUCCESS_MESSAGES.STOCK_UPDATED };
     } catch (error) {
       await transaction.rollback();
-      throw error;
+      console.error(ERROR_MESSAGES.UPDATE_STOCK, error);
+      return { error: ERROR_MESSAGES.UPDATE_STOCK, statusCode: 500 };
     }
   }
 }

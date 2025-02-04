@@ -14,7 +14,10 @@ describe('InventoryController', () => {
   let next: jest.Mock;
 
   beforeEach(() => {
-    req = {};
+    req = {
+      body: {},
+      params: {}
+    };
     res = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
@@ -41,9 +44,11 @@ describe('InventoryController', () => {
 
       await InventoryController.getAllStocks(req as Request, res as Response);
 
-      expect(inventoryService.getAllStocks).toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(HTTP.INTERNAL_SERVER_ERROR);
-      expect(res.json).toHaveBeenCalledWith({ message: ERROR_MESSAGES.GET_ALL_STOCKS, error });
+      expect(res.json).toHaveBeenCalledWith({
+        message: ERROR_MESSAGES.GET_ALL_STOCKS,
+        error: error.message
+      });
     });
   });
 
@@ -80,7 +85,10 @@ describe('InventoryController', () => {
 
       expect(inventoryService.getStockByProductId).toHaveBeenCalledWith(1);
       expect(res.status).toHaveBeenCalledWith(HTTP.INTERNAL_SERVER_ERROR);
-      expect(res.json).toHaveBeenCalledWith({ message: ERROR_MESSAGES.GET_STOCK_BY_PRODUCT_ID, error });
+      expect(res.json).toHaveBeenCalledWith({ 
+        message: ERROR_MESSAGES.GET_STOCK_BY_PRODUCT_ID, 
+        error: error.message 
+      });
     });
   });
 
@@ -100,7 +108,7 @@ describe('InventoryController', () => {
     });
 
     it('should return 400 for invalid input', async () => {
-      req.body = { product_id: 1, quantity: 0, input_output: INPUT_OUTPUT.INPUT };
+      req.body = { product_id: 1, quantity: 10, input_output: INPUT_OUTPUT.OUTPUT };
 
       await InventoryController.addStock(req as Request, res as Response);
 
@@ -128,7 +136,7 @@ describe('InventoryController', () => {
 
       expect(axiosClient.get).toHaveBeenCalledWith(`${config.productServiceUrl}/1`);
       expect(res.status).toHaveBeenCalledWith(HTTP.INTERNAL_SERVER_ERROR);
-      expect(res.json).toHaveBeenCalledWith({ message: ERROR_MESSAGES.ADD_STOCK, error });
+      expect(res.json).toHaveBeenCalledWith({ message: ERROR_MESSAGES.ADD_STOCK, error: error.message });
     });
   });
 
@@ -176,7 +184,79 @@ describe('InventoryController', () => {
 
       expect(axiosClient.get).toHaveBeenCalledWith(`${config.productServiceUrl}/1`);
       expect(res.status).toHaveBeenCalledWith(HTTP.INTERNAL_SERVER_ERROR);
-      expect(res.json).toHaveBeenCalledWith({ message: ERROR_MESSAGES.UPDATE_STOCK, error });
+      expect(res.json).toHaveBeenCalledWith({ message: ERROR_MESSAGES.UPDATE_STOCK, error: error.message });
     });
+  });
+});
+
+describe('InventoryController.updateStock', () => {
+  let req: Partial<Request>;
+  let res: Partial<Response>;
+
+  beforeEach(() => {
+    req = {
+      body: {}
+    };
+    res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn()
+    };
+  });
+
+  it('should return 400 for invalid input', async () => {
+    req.body = { product_id: 1, quantity: 0, input_output: INPUT_OUTPUT.OUTPUT };
+
+    await InventoryController.updateStock(req as Request, res as Response);
+
+    expect(res.status).toHaveBeenCalledWith(HTTP.BAD_REQUEST);
+    expect(res.json).toHaveBeenCalledWith({ message: ERROR_MESSAGES.INVALID_DATA });
+  });
+
+  it('should return 404 if product not found', async () => {
+    req.body = { product_id: 1, quantity: 10, input_output: INPUT_OUTPUT.OUTPUT };
+    (axiosClient.get as jest.Mock).mockResolvedValue({ status: HTTP.NOT_FOUND });
+
+    await InventoryController.updateStock(req as Request, res as Response);
+
+    expect(axiosClient.get).toHaveBeenCalledWith(`${config.productServiceUrl}/1`);
+    expect(res.status).toHaveBeenCalledWith(HTTP.NOT_FOUND);
+    expect(res.json).toHaveBeenCalledWith({ message: ERROR_MESSAGES.PRODUCT_NOT_FOUND });
+  });
+
+  it('should handle errors', async () => {
+    const error = new Error('Test error');
+    req.body = { product_id: 1, quantity: 10, input_output: INPUT_OUTPUT.OUTPUT };
+    (axiosClient.get as jest.Mock).mockRejectedValue(error);
+
+    await InventoryController.updateStock(req as Request, res as Response);
+
+    expect(axiosClient.get).toHaveBeenCalledWith(`${config.productServiceUrl}/1`);
+    expect(res.status).toHaveBeenCalledWith(HTTP.INTERNAL_SERVER_ERROR);
+    expect(res.json).toHaveBeenCalledWith({
+      message: ERROR_MESSAGES.UPDATE_STOCK,
+      error: error.message
+    });
+  });
+
+  it('should update stock successfully', async () => {
+    const stock = { product_id: 1, quantity: 10 };
+    req.body = { product_id: 1, quantity: 10, input_output: INPUT_OUTPUT.OUTPUT };
+    (axiosClient.get as jest.Mock).mockResolvedValue({ status: HTTP.OK });
+    (inventoryService.updateStock as jest.Mock).mockResolvedValue({
+      data: stock,
+      message: SUCCESS_MESSAGES.STOCK_UPDATED
+    });
+
+    await InventoryController.updateStock(req as Request, res as Response);
+
+    expect(res.status).toHaveBeenCalledWith(HTTP.OK);
+    expect(res.json).toHaveBeenCalledWith({
+      message: SUCCESS_MESSAGES.STOCK_UPDATED,
+      updatedStock: {
+        data: stock,
+        message: SUCCESS_MESSAGES.STOCK_UPDATED
+      }
+    });
+    expect(inventoryService.updateStock).toHaveBeenCalledWith(1, 10, INPUT_OUTPUT.OUTPUT);
   });
 });

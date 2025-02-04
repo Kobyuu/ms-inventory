@@ -1,27 +1,36 @@
-import circuitBreaker from 'opossum';
-import express from 'express';
-import { ERROR_MESSAGES, HTTP } from '../config/constants';
+import CircuitBreaker from 'opossum';
+import axios from 'axios';
+import { ERROR_MESSAGES } from '../config/constants';
 
-const breakerOptions = {
-  timeout: 3000, // Si una solicitud toma más de 3 segundos, se considera fallida
-  errorThresholdPercentage: 50, // Si el 50% de las solicitudes fallan, el circuito se abre
-  resetTimeout: 30000, // El circuito se cierra después de 30 segundos
+// Función que realiza una solicitud HTTP
+async function fetchData(url: string) {
+  const response = await axios.get(url);
+  return response.data;
+}
+
+// Opciones del Circuit Breaker
+const options = {
+  timeout: 3000, // Tiempo máximo para una solicitud (en milisegundos)
+  errorThresholdPercentage: 50, // Umbral de error para abrir el circuito
+  resetTimeout: 5000 // Tiempo para intentar cerrar el circuito nuevamente (en milisegundos)
 };
 
-// Función que maneja la lógica del Circuit Breaker
-const breakerFunction = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  // Aquí puedes agregar la lógica específica que deseas proteger con el Circuit Breaker
-  next();
-};
+// Crear una instancia del Circuit Breaker
+const breaker = new CircuitBreaker(fetchData, options);
 
-const breaker = new circuitBreaker(breakerFunction, breakerOptions);
+// Manejar eventos del Circuit Breaker
+breaker.on('open', () => console.warn('Circuito abierto'));
+breaker.on('halfOpen', () => console.info('Circuito en estado medio abierto'));
+breaker.on('close', () => console.info('Circuito cerrado'));
+breaker.on('fallback', () => console.error(ERROR_MESSAGES.SERVICE_UNAVAILABLE));
 
-// Middleware del Circuit Breaker
-const circuitBreakerMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  breaker.fire(req, res, next).catch((err) => {
-    console.error('Circuit Breaker Error:', err);
-    res.status(HTTP.SERVICE_UNAVAILABLE).json({ message: ERROR_MESSAGES.SERVICE_UNAVAILABLE });
-  });
-};
-
-export default circuitBreakerMiddleware;
+// Función para realizar una solicitud con el Circuit Breaker
+export async function fetchDataWithCircuitBreaker(url: string) {
+  try {
+    const data = await breaker.fire(url);
+    return data;
+  } catch (error) {
+    console.error(ERROR_MESSAGES.HTTP_REQUEST, error);
+    throw error;
+  }
+}
