@@ -8,12 +8,13 @@ import { withCircuitBreaker } from './middleware/circuitBreaker';
 const router = Router();
 
 // Obtener todos los registros de inventario
-router.get('/', InventoryController.getAllStocks);
+router.get('/', withCircuitBreaker, InventoryController.getAllStocks);
 
 // Obtener stock por ID de producto
 router.get('/:product_id', 
   param('product_id').isInt().withMessage('product_id debe ser un número entero'),
   handleInputErrors,
+  withCircuitBreaker,
   InventoryController.getStockByProductId
 );
 
@@ -26,6 +27,7 @@ router.post('/',
   validateProductId,
   validateQuantity,
   validateInputOutput,
+  withCircuitBreaker,
   InventoryController.addStock
 );
 
@@ -38,6 +40,7 @@ router.put('/update',
   validateProductId,
   validateQuantity,
   validateInputOutput,
+  withCircuitBreaker,
   InventoryController.updateStock
 );
 
