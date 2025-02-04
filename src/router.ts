@@ -7,39 +7,44 @@ import { withCircuitBreaker } from './middleware/circuitBreaker';
 
 const router = Router();
 
-// Obtener todos los registros de inventario
-router.get('/', withCircuitBreaker, InventoryController.getAllStocks);
+// Common validation middleware
+const commonValidations = [
+  validateProductId,
+  validateQuantity,
+  validateInputOutput,
+  handleInputErrors
+];
 
-// Obtener stock por ID de producto
-router.get('/:product_id', 
+// Common stock validation middleware
+const stockValidations = [
+  body('product_id').isInt().withMessage('product_id debe ser un número entero'),
+  body('quantity').isFloat({ gt: 0 }).withMessage('quantity debe ser un número mayor que 0'),
+  body('input_output').isIn([1, 2]).withMessage('input_output debe ser 1 (entrada) o 2 (salida)')
+];
+
+// Routes with improved middleware organization
+router.get('/', 
+  withCircuitBreaker, 
+  InventoryController.getAllStocks
+);
+
+router.get('/:product_id',
   param('product_id').isInt().withMessage('product_id debe ser un número entero'),
   handleInputErrors,
   withCircuitBreaker,
   InventoryController.getStockByProductId
 );
 
-// Agregar nuevo registro de inventario con validación
-router.post('/', 
-  body('product_id').isInt().withMessage('product_id debe ser un número entero'),
-  body('quantity').isFloat({ gt: 0 }).withMessage('quantity debe ser un número mayor que 0'),
-  body('input_output').isIn([1, 2]).withMessage('input_output debe ser 1 (entrada) o 2 (salida)'),
-  handleInputErrors,
-  validateProductId,
-  validateQuantity,
-  validateInputOutput,
+router.post('/',
+  stockValidations,
+  commonValidations,
   withCircuitBreaker,
   InventoryController.addStock
 );
 
-// Modificar la cantidad en el inventario con validación
-router.put('/update', 
-  body('product_id').isInt().withMessage('product_id debe ser un número entero'),
-  body('quantity').isFloat({ gt: 0 }).withMessage('quantity debe ser un número mayor que 0'),
-  body('input_output').isIn([1, 2]).withMessage('input_output debe ser 1 (entrada) o 2 (salida)'),
-  handleInputErrors,
-  validateProductId,
-  validateQuantity,
-  validateInputOutput,
+router.put('/update',
+  stockValidations,
+  commonValidations,
   withCircuitBreaker,
   InventoryController.updateStock
 );

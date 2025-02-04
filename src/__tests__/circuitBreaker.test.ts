@@ -1,7 +1,6 @@
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 import { fetchDataWithCircuitBreaker } from '../middleware/circuitBreaker';
-import { ERROR_MESSAGES } from '../config/constants';
 
 describe('Circuit Breaker', () => {
   let mockAxios: MockAdapter;

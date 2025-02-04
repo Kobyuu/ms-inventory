@@ -2,39 +2,74 @@ import CircuitBreaker from 'opossum';
 import axios from 'axios';
 import { Request, Response, NextFunction } from 'express';
 import { ERROR_MESSAGES, HTTP } from '../config/constants';
+import { CircuitBreakerService } from '../types/types';
 
-// Función que realiza una solicitud HTTP
-async function makeHttpRequest(url: string) {
-  const response = await axios.get(url);
-  return response.data;
-}
+class HttpCircuitBreaker implements CircuitBreakerService {
+  private breaker: CircuitBreaker;
 
-// Opciones del Circuit Breaker
-const options = {
-  timeout: 3000,
-  errorThresholdPercentage: 50,
-  resetTimeout: 5000
-};
+  constructor() {
+    const options = {
+      timeout: 3000,
+      errorThresholdPercentage: 50,
+      resetTimeout: 5000,
+      name: 'HTTP Circuit Breaker'
+    };
 
-// Crear una instancia del Circuit Breaker
-const breaker = new CircuitBreaker(makeHttpRequest, options);
+    const makeHttpRequest = async (url: string) => {
+      try {
+        const response = await axios.get(url);
+        return response.data;
+      } catch (error) {
+        console.error(ERROR_MESSAGES.HTTP_REQUEST, error);
+        throw error;
+      }
+    };
 
-// Manejar eventos del Circuit Breaker
-breaker.on('open', () => console.warn('Circuit Breaker: Open'));
-breaker.on('halfOpen', () => console.info('Circuit Breaker: Half Open'));
-breaker.on('close', () => console.info('Circuit Breaker: Closed'));
-
-// Middleware para Express
-export function withCircuitBreaker(req: Request, res: Response, next: NextFunction) {
-  next();
-}
-
-// Mantener la función existente para uso directo
-export async function fetchDataWithCircuitBreaker(url: string) {
-  try {
-    return await breaker.fire(url);
-  } catch (error) {
-    console.error(ERROR_MESSAGES.HTTP_REQUEST, error);
-    throw error;
+    this.breaker = new CircuitBreaker(makeHttpRequest, options);
+    this.setupEventHandlers();
   }
+  onStateChange(callback: (state: string) => void): void {
+    throw new Error('Method not implemented.');
+  }
+
+  private setupEventHandlers(): void {
+    this.breaker.on('open', () => console.warn('Circuit Breaker: Open - Service is unavailable'));
+    this.breaker.on('halfOpen', () => console.info('Circuit Breaker: Half Open - Testing service availability'));
+    this.breaker.on('close', () => console.info('Circuit Breaker: Closed - Service is operational'));
+    this.breaker.on('fallback', () => console.warn('Circuit Breaker: Fallback - Using backup operation'));
+  }
+
+  isOpen(): boolean {
+    return this.breaker.opened;
+  }
+
+  async fire<T>(url: string): Promise<T> {
+    if (this.breaker.opened) {
+      throw new Error(ERROR_MESSAGES.SERVICE_UNAVAILABLE);
+    }
+    return await this.breaker.fire(url) as T;
+  }
+}
+
+const circuitBreaker = new HttpCircuitBreaker();
+
+export function withCircuitBreaker(req: Request, res: Response, next: NextFunction) {
+  if (circuitBreaker.isOpen()) {
+    return res.status(HTTP.SERVICE_UNAVAILABLE).json({
+      message: ERROR_MESSAGES.SERVICE_UNAVAILABLE
+    });
+  }
+
+  circuitBreaker.fire(req.originalUrl)
+    .then(() => next())
+    .catch((error) => {
+      console.error(ERROR_MESSAGES.HTTP_REQUEST, error);
+      res.status(HTTP.SERVICE_UNAVAILABLE).json({
+        message: ERROR_MESSAGES.SERVICE_UNAVAILABLE
+      });
+    });
+}
+
+export async function fetchDataWithCircuitBreaker(url: string) {
+  return circuitBreaker.fire(url);
 }
