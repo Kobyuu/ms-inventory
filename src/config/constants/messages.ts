@@ -32,6 +32,12 @@ export const SUCCESS_MESSAGES = {
     ALL_STOCKS_FETCHED: 'Todos los stocks obtenidos exitosamente'
 };
 
+export const CIRCUIT_BREAKER_MESSAGES = {
+    OPEN: 'Circuito abierto',
+    HALF_OPEN: 'Circuito medio abierto',
+    CLOSED: 'Circuito cerrado'
+};
+
 export const DYNAMIC_MESSAGES = {
     SERVER_START: (port: number) => `REST API en el puerto ${port}`
 };

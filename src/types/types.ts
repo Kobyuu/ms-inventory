@@ -27,10 +27,3 @@ export interface CacheService {
 export interface DatabaseService {
   transaction<T>(): Promise<T>;
 }
-
-// Circuit Breaker interface
-export interface CircuitBreakerService {
-  isOpen(): boolean;
-  fire<T>(command: string): Promise<T>;
-  onStateChange(callback: (state: string) => void): void;
-}

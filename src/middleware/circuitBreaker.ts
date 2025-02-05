@@ -1,6 +1,6 @@
 import CircuitBreaker from 'opossum';
 import { Request, Response, NextFunction } from 'express';
-import { ERROR_MESSAGES, HTTP } from '../config/constants';
+import { ERROR_MESSAGES, HTTP, CIRCUIT_BREAKER_MESSAGES } from '../config/constants';
 
 const options = {
     timeout: 3000, // Si la operación tarda más de 3 segundos, se considera un fallo
@@ -19,9 +19,9 @@ breaker.fallback((req: Request, res: Response) => {
 });
 
 // Eventos del CircuitBreaker para monitorear su estado
-breaker.on('open', () => console.log('Circuito abierto'));
-breaker.on('halfOpen', () => console.log('Circuito medio abierto'));
-breaker.on('close', () => console.log('Circuito cerrado'));
+breaker.on('open', () => console.log(CIRCUIT_BREAKER_MESSAGES.OPEN));
+breaker.on('halfOpen', () => console.log(CIRCUIT_BREAKER_MESSAGES.HALF_OPEN));
+breaker.on('close', () => console.log(CIRCUIT_BREAKER_MESSAGES.CLOSED));
 
 // Middleware que utiliza el CircuitBreaker
 export const withCircuitBreaker = (req: Request, res: Response, next: NextFunction) => {
