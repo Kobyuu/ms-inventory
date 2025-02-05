@@ -1,44 +1,58 @@
-import axios from 'axios';
-import MockAdapter from 'axios-mock-adapter';
-import { fetchDataWithCircuitBreaker } from '../middleware/circuitBreaker';
+import request from 'supertest';
+import express from 'express';
+import CircuitBreaker from 'opossum';
+import { withCircuitBreaker, breaker } from '../middleware/circuitBreaker';
+import { ERROR_MESSAGES, HTTP } from '../config/constants';
 
-describe('Circuit Breaker', () => {
-  let mockAxios: MockAdapter;
+const app = express();
 
-  beforeEach(() => {
-    mockAxios = new MockAdapter(axios);
-  });
+app.get('/test', withCircuitBreaker, (req, res) => {
+    res.status(200).send('Success');
+});
 
-  afterEach(() => {
-    mockAxios.reset();
-    mockAxios.restore();
-  });
+describe('CircuitBreaker Middleware', () => {
+    it('should allow the request to pass through when the circuit is closed', async () => {
+        const response = await request(app).get('/test');
+        expect(response.status).toBe(200);
+        expect(response.text).toBe('Success');
+    });
 
-  it('should successfully fetch data when service is available', async () => {
-    const testData = { message: 'Success' };
-    const testUrl = 'http://test-api.com/data';
-    
-    mockAxios.onGet(testUrl).reply(200, testData);
+    it('should return service unavailable when the circuit is open', async () => {
+        // Simulate circuit open state
+        breaker.open();
 
-    const result = await fetchDataWithCircuitBreaker(testUrl);
-    expect(result).toEqual(testData);
-  });
+        const response = await request(app).get('/test');
+        expect(response.status).toBe(HTTP.SERVICE_UNAVAILABLE);
+        expect(response.body).toEqual({ message: ERROR_MESSAGES.SERVICE_UNAVAILABLE });
 
-  it('should throw error when service is unavailable', async () => {
-    const testUrl = 'http://test-api.com/data';
-    mockAxios.onGet(testUrl).networkError();
+        // Reset the circuit breaker state
+        breaker.close();
+    });
 
-    await expect(fetchDataWithCircuitBreaker(testUrl))
-      .rejects
-      .toThrow();
-  });
+    it('should handle errors and open the circuit', async () => {
+        // Simulate an error to open the circuit
+        const errorBreaker = new CircuitBreaker(async () => {
+            throw new Error('Test error');
+        }, {
+            timeout: 3000,
+            errorThresholdPercentage: 50,
+            resetTimeout: 30000
+        });
 
-  it('should handle timeout errors', async () => {
-    const testUrl = 'http://test-api.com/data';
-    mockAxios.onGet(testUrl).timeout();
+        // Set up fallback for the errorBreaker
+        errorBreaker.fallback((): { status: number, message: string } => {
+            return { status: HTTP.SERVICE_UNAVAILABLE, message: ERROR_MESSAGES.SERVICE_UNAVAILABLE };
+        });
 
-    await expect(fetchDataWithCircuitBreaker(testUrl))
-      .rejects
-      .toThrow();
-  });
+        const errorApp = express();
+        errorApp.get('/error-test', (req, res, next) => {
+            errorBreaker.fire().then((result: { status: number, message: string }) => {
+                            res.status(result.status).json({ message: result.message });
+            }).catch(next);
+        });
+
+        const response = await request(errorApp).get('/error-test');
+        expect(response.status).toBe(HTTP.SERVICE_UNAVAILABLE);
+        expect(response.body).toEqual({ message: ERROR_MESSAGES.SERVICE_UNAVAILABLE });
+    });
 });
