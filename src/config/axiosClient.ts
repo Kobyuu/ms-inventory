@@ -1,7 +1,7 @@
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
 import { config } from './constants/enviroment';
-import { ERROR_MESSAGES, DYNAMIC_MESSAGES } from './constants';
+import { ERROR_MESSAGES } from './constants';
 
 const axiosClient = axios.create({
   baseURL: config.productServiceUrl,
@@ -12,7 +12,7 @@ const axiosClient = axios.create({
 axiosRetry(axiosClient, {
   retries: config.retryAttempts, // Número de reintentos
   retryDelay: (retryCount) => {
-    console.log(DYNAMIC_MESSAGES.RETRY_ATTEMPT(retryCount));
+    console.log(`Intento de reintento: ${retryCount}`);
     return retryCount * config.retryDelay; // Retraso entre reintentos (en milisegundos)
   },
   retryCondition: (error) => {

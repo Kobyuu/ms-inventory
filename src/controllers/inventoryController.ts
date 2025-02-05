@@ -82,24 +82,6 @@ class InventoryController {
       });
     }
   }
-  
-  // Método para eliminar un producto del inventario
-  static async deleteProduct(req: Request, res: Response) {
-    const { product_id } = req.params;
-
-    try {
-      const result = await inventoryService.deleteProduct(Number(product_id));
-
-      if (result.error) {
-        return res.status(result.statusCode).json({ message: result.error });
-      }
-
-      return res.status(200).json({ message: result.message });
-    } catch (error) {
-      console.error(ERROR_MESSAGES.DELETE_PRODUCT, error);
-      return res.status(500).json({ message: ERROR_MESSAGES.DELETE_PRODUCT });
-    }
-  }
 }
 
 export default InventoryController;
