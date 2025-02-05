@@ -41,8 +41,28 @@ Microservicio para gestionar el inventario de productos con características ava
 
     # Retry Configuration
     RETRY_DELAY=1000
-    RETRY_ATTEMPTS=3
+    RETRY_ATTEMPTS=3\
     ```
+
+## jest.config.js
+
+```js
+module.exports = {
+    preset: 'ts-jest',
+    testEnvironment: 'node',
+    setupFilesAfterEnv: ['./jest.setup.js'],
+    moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+    testMatch: ['**/__tests__/**/*.test.ts'],
+    transform: {
+        '^.+\\.ts$': 'ts-jest'
+    }
+};
+```
+## jest.setup.js
+
+```js
+jest.setTimeout(30000)
+```
 
 ## Características
 
