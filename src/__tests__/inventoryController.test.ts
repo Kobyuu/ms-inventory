@@ -219,85 +219,133 @@ describe('InventoryController', () => {
       expect(res.json).toHaveBeenCalledWith({ message: ERROR_MESSAGES.UPDATE_STOCK, error: error.message });
     });
   });
-});
 
-// Pruebas adicionales para el método updateStock
-describe('InventoryController.updateStock', () => {
-  let req: Partial<Request>;
-  let res: Partial<Response>;
+  // Pruebas para el método deleteProduct
+  describe('deleteProduct', () => {
+    it('should delete product successfully', async () => {
+      req.params = { product_id: '1' };
+      // Mockeamos la función deleteProduct del servicio para que retorne éxito
+      (inventoryService.deleteProduct as jest.Mock).mockResolvedValue({
+        message: SUCCESS_MESSAGES.PRODUCT_DELETED
+      });
 
-  beforeEach(() => {
-    req = {
-      body: {}
-    };
-    res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn()
-    };
-  });
+      await InventoryController.deleteProduct(req as Request, res as Response);
 
-  it('should return 400 for invalid input', async () => {
-    req.body = { product_id: 1, quantity: 0, input_output: INPUT_OUTPUT.OUTPUT };
+      // Verificamos que se haya llamado al servicio con el ID correcto y que la respuesta sea correcta
+      expect(inventoryService.deleteProduct).toHaveBeenCalledWith(1);
+      expect(res.status).toHaveBeenCalledWith(HTTP.OK);
+      expect(res.json).toHaveBeenCalledWith({ message: SUCCESS_MESSAGES.PRODUCT_DELETED });
+    });
 
-    await InventoryController.updateStock(req as Request, res as Response);
+    it('should return 404 if product not found', async () => {
+      req.params = { product_id: '1' };
+      // Mockeamos la función deleteProduct del servicio para que retorne error de producto no encontrado
+      (inventoryService.deleteProduct as jest.Mock).mockResolvedValue({
+        error: ERROR_MESSAGES.PRODUCT_NOT_FOUND,
+        statusCode: HTTP.NOT_FOUND
+      });
 
-    // Verificamos que se maneje el caso de entrada inválida correctamente
-    expect(res.status).toHaveBeenCalledWith(HTTP.BAD_REQUEST);
-    expect(res.json).toHaveBeenCalledWith({ message: ERROR_MESSAGES.INVALID_DATA });
-  });
+      await InventoryController.deleteProduct(req as Request, res as Response);
 
-  it('should return 404 if product not found', async () => {
-    req.body = { product_id: 1, quantity: 10, input_output: INPUT_OUTPUT.OUTPUT };
-    // Mockeamos la llamada a axiosClient.get para simular que el producto no existe
-    (axiosClient.get as jest.Mock).mockResolvedValue({ status: HTTP.NOT_FOUND });
+      // Verificamos que se maneje el caso de producto no encontrado correctamente
+      expect(inventoryService.deleteProduct).toHaveBeenCalledWith(1);
+      expect(res.status).toHaveBeenCalledWith(HTTP.NOT_FOUND);
+      expect(res.json).toHaveBeenCalledWith({ message: ERROR_MESSAGES.PRODUCT_NOT_FOUND });
+    });
 
-    await InventoryController.updateStock(req as Request, res as Response);
+    it('should handle errors', async () => {
+      const error = new Error('Test error');
+      req.params = { product_id: '1' };
+      // Mockeamos la función deleteProduct del servicio para que lance un error
+      (inventoryService.deleteProduct as jest.Mock).mockRejectedValue(error);
 
-    // Verificamos que se maneje el caso de producto no encontrado correctamente
-    expect(axiosClient.get).toHaveBeenCalledWith(`${config.productServiceUrl}/1`);
-    expect(res.status).toHaveBeenCalledWith(HTTP.NOT_FOUND);
-    expect(res.json).toHaveBeenCalledWith({ message: ERROR_MESSAGES.PRODUCT_NOT_FOUND });
-  });
+      await InventoryController.deleteProduct(req as Request, res as Response);
 
-  it('should handle errors', async () => {
-    const error = new Error('Test error');
-    req.body = { product_id: 1, quantity: 10, input_output: INPUT_OUTPUT.OUTPUT };
-    // Mockeamos la llamada a axiosClient.get para que lance un error
-    (axiosClient.get as jest.Mock).mockRejectedValue(error);
-
-    await InventoryController.updateStock(req as Request, res as Response);
-
-    // Verificamos que se maneje el error correctamente
-    expect(axiosClient.get).toHaveBeenCalledWith(`${config.productServiceUrl}/1`);
-    expect(res.status).toHaveBeenCalledWith(HTTP.INTERNAL_SERVER_ERROR);
-    expect(res.json).toHaveBeenCalledWith({
-      message: ERROR_MESSAGES.UPDATE_STOCK,
-      error: error.message
+      // Verificamos que se maneje el error correctamente
+      expect(inventoryService.deleteProduct).toHaveBeenCalledWith(1);
+      expect(res.status).toHaveBeenCalledWith(HTTP.INTERNAL_SERVER_ERROR);
+      expect(res.json).toHaveBeenCalledWith({ message: ERROR_MESSAGES.DELETE_PRODUCT });
     });
   });
 
-  it('should update stock successfully', async () => {
-    const stock = { product_id: 1, quantity: 10 };
-    req.body = { product_id: 1, quantity: 10, input_output: INPUT_OUTPUT.OUTPUT };
-    // Mockeamos la llamada a axiosClient.get para simular que el producto existe
-    (axiosClient.get as jest.Mock).mockResolvedValue({ status: HTTP.OK });
-    // Mockeamos la función updateStock del servicio para que retorne el stock actualizado
-    (inventoryService.updateStock as jest.Mock).mockResolvedValue({
-      data: stock,
-      message: SUCCESS_MESSAGES.STOCK_UPDATED
+  // Pruebas adicionales para el método updateStock
+  describe('InventoryController.updateStock', () => {
+    let req: Partial<Request>;
+    let res: Partial<Response>;
+
+    beforeEach(() => {
+      req = {
+        body: {}
+      };
+      res = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn()
+      };
     });
 
-    await InventoryController.updateStock(req as Request, res as Response);
+    it('should return 400 for invalid input', async () => {
+      req.body = { product_id: 1, quantity: 0, input_output: INPUT_OUTPUT.OUTPUT };
 
-    // Verificamos que la respuesta sea correcta y que se haya llamado al servicio con los parámetros correctos
-    expect(res.status).toHaveBeenCalledWith(HTTP.OK);
-    expect(res.json).toHaveBeenCalledWith({
-      message: SUCCESS_MESSAGES.STOCK_UPDATED,
-      updatedStock: {
+      await InventoryController.updateStock(req as Request, res as Response);
+
+      // Verificamos que se maneje el caso de entrada inválida correctamente
+      expect(res.status).toHaveBeenCalledWith(HTTP.BAD_REQUEST);
+      expect(res.json).toHaveBeenCalledWith({ message: ERROR_MESSAGES.INVALID_DATA });
+    });
+
+    it('should return 404 if product not found', async () => {
+      req.body = { product_id: 1, quantity: 10, input_output: INPUT_OUTPUT.OUTPUT };
+      // Mockeamos la llamada a axiosClient.get para simular que el producto no existe
+      (axiosClient.get as jest.Mock).mockResolvedValue({ status: HTTP.NOT_FOUND });
+
+      await InventoryController.updateStock(req as Request, res as Response);
+
+      // Verificamos que se maneje el caso de producto no encontrado correctamente
+      expect(axiosClient.get).toHaveBeenCalledWith(`${config.productServiceUrl}/1`);
+      expect(res.status).toHaveBeenCalledWith(HTTP.NOT_FOUND);
+      expect(res.json).toHaveBeenCalledWith({ message: ERROR_MESSAGES.PRODUCT_NOT_FOUND });
+    });
+
+    it('should handle errors', async () => {
+      const error = new Error('Test error');
+      req.body = { product_id: 1, quantity: 10, input_output: INPUT_OUTPUT.OUTPUT };
+      // Mockeamos la llamada a axiosClient.get para que lance un error
+      (axiosClient.get as jest.Mock).mockRejectedValue(error);
+
+      await InventoryController.updateStock(req as Request, res as Response);
+
+      // Verificamos que se maneje el error correctamente
+      expect(axiosClient.get).toHaveBeenCalledWith(`${config.productServiceUrl}/1`);
+      expect(res.status).toHaveBeenCalledWith(HTTP.INTERNAL_SERVER_ERROR);
+      expect(res.json).toHaveBeenCalledWith({
+        message: ERROR_MESSAGES.UPDATE_STOCK,
+        error: error.message
+      });
+    });
+
+    it('should update stock successfully', async () => {
+      const stock = { product_id: 1, quantity: 10 };
+      req.body = { product_id: 1, quantity: 10, input_output: INPUT_OUTPUT.OUTPUT };
+      // Mockeamos la llamada a axiosClient.get para simular que el producto existe
+      (axiosClient.get as jest.Mock).mockResolvedValue({ status: HTTP.OK });
+      // Mockeamos la función updateStock del servicio para que retorne el stock actualizado
+      (inventoryService.updateStock as jest.Mock).mockResolvedValue({
         data: stock,
         message: SUCCESS_MESSAGES.STOCK_UPDATED
-      }
+      });
+
+      await InventoryController.updateStock(req as Request, res as Response);
+
+      // Verificamos que la respuesta sea correcta y que se haya llamado al servicio con los parámetros correctos
+      expect(res.status).toHaveBeenCalledWith(HTTP.OK);
+      expect(res.json).toHaveBeenCalledWith({
+        message: SUCCESS_MESSAGES.STOCK_UPDATED,
+        updatedStock: {
+          data: stock,
+          message: SUCCESS_MESSAGES.STOCK_UPDATED
+        }
+      });
+      expect(inventoryService.updateStock).toHaveBeenCalledWith(1, 10, INPUT_OUTPUT.OUTPUT);
     });
-    expect(inventoryService.updateStock).toHaveBeenCalledWith(1, 10, INPUT_OUTPUT.OUTPUT);
   });
 });

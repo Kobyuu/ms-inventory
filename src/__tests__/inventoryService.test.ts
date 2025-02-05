@@ -163,4 +163,44 @@ describe('InventoryService', () => {
       expect(result).toEqual({ error: ERROR_MESSAGES.UPDATE_STOCK, statusCode: 500 });
     });
   });
+
+  // Pruebas para el método deleteProduct
+  describe('deleteProduct', () => {
+    it('should delete product successfully', async () => {
+      const stock = { product_id: 1, destroy: jest.fn() };
+      const transaction = { commit: jest.fn(), rollback: jest.fn() };
+      (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
+      jest.spyOn(Stock, 'findOne').mockResolvedValue(stock as any);
+
+      const result = await InventoryService.deleteProduct(1);
+
+      expect(Stock.findOne).toHaveBeenCalledWith({ where: { product_id: 1 } });
+      expect(stock.destroy).toHaveBeenCalledWith({ transaction });
+      expect(transaction.commit).toHaveBeenCalled();
+      expect(cacheService.clearCache).toHaveBeenCalledWith(['stock:1', 'allStocks']);
+      expect(result).toEqual({ message: SUCCESS_MESSAGES.PRODUCT_DELETED });
+    });
+
+    it('should return 404 if product does not exist', async () => {
+      const transaction = { commit: jest.fn(), rollback: jest.fn() };
+      (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
+      jest.spyOn(Stock, 'findOne').mockResolvedValue(null);
+
+      const result = await InventoryService.deleteProduct(1);
+
+      expect(transaction.rollback).toHaveBeenCalled();
+      expect(result).toEqual({ error: ERROR_MESSAGES.PRODUCT_NOT_FOUND, statusCode: 404 });
+    });
+
+    it('should handle errors and rollback transaction', async () => {
+      const transaction = { commit: jest.fn(), rollback: jest.fn() };
+      (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
+      jest.spyOn(Stock, 'findOne').mockRejectedValue(new Error('Test error'));
+
+      const result = await InventoryService.deleteProduct(1);
+
+      expect(transaction.rollback).toHaveBeenCalled();
+      expect(result).toEqual({ error: ERROR_MESSAGES.DELETE_PRODUCT, statusCode: 500 });
+    });
+  });
 });

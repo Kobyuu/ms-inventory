@@ -49,4 +49,12 @@ router.put('/update',
   InventoryController.updateStock
 );
 
+// Route for deleting a product
+router.delete('/:product_id',
+  param('product_id').isInt().withMessage('product_id debe ser un número entero'),
+  handleInputErrors,
+  withCircuitBreaker,
+  InventoryController.deleteProduct
+);
+
 export default router;

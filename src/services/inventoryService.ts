@@ -109,6 +109,33 @@ class InventoryService {
       return { error: ERROR_MESSAGES.UPDATE_STOCK, statusCode: 500 };
     }
   }
+
+  // Método para eliminar un producto del inventario
+  async deleteProduct(product_id: number) {
+    const transaction = await dbService.transaction();
+    try {
+      // Busca el producto en el inventario
+      const stock = await Stock.findOne({ where: { product_id } });
+
+      // Si el producto no existe, devuelve un error
+      if (!stock) {
+        await transaction.rollback();
+        return { error: ERROR_MESSAGES.PRODUCT_NOT_FOUND, statusCode: 404 };
+      }
+
+      // Elimina el producto del inventario
+      await stock.destroy({ transaction });
+      await transaction.commit();
+
+      // Limpia el caché relacionado con el producto eliminado
+      await cacheService.clearCache([`stock:${product_id}`, 'allStocks']);
+      return { message: SUCCESS_MESSAGES.PRODUCT_DELETED };
+    } catch (error) {
+      await transaction.rollback();
+      console.error(ERROR_MESSAGES.DELETE_PRODUCT, error);
+      return { error: ERROR_MESSAGES.DELETE_PRODUCT, statusCode: 500 };
+    }
+  }
 }
 
 export default new InventoryService();
