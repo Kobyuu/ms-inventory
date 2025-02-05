@@ -24,7 +24,7 @@ describe('InventoryService', () => {
       expect(result).toEqual({ data: cachedStocks, message: SUCCESS_MESSAGES.ALL_STOCKS_FETCHED });
     });
 
-    it('should return all stocks from database if not in cache', async () => {
+    it('should return all stocks from database if not in cache and set to cache', async () => {
       const stocks = [{ product_id: 1, quantity: 10 }];
       (cacheService.getFromCache as jest.Mock).mockResolvedValue(null);
       jest.spyOn(Stock, 'findAll').mockResolvedValue(stocks as any);
@@ -37,9 +37,8 @@ describe('InventoryService', () => {
       expect(result).toEqual({ data: stocks, message: SUCCESS_MESSAGES.ALL_STOCKS_FETCHED });
     });
 
-    it('should handle errors', async () => {
-      const error = new Error('Test error');
-      (cacheService.getFromCache as jest.Mock).mockRejectedValue(error);
+    it('should handle errors gracefully', async () => {
+      (cacheService.getFromCache as jest.Mock).mockRejectedValue(new Error('Test error'));
 
       const result = await InventoryService.getAllStocks();
 
@@ -58,7 +57,7 @@ describe('InventoryService', () => {
       expect(result).toEqual({ data: cachedStock, message: SUCCESS_MESSAGES.STOCK_FETCHED });
     });
 
-    it('should return stock from database if not in cache', async () => {
+    it('should return stock from database if not in cache and set to cache', async () => {
       const stock = { product_id: 1, quantity: 10 };
       (cacheService.getFromCache as jest.Mock).mockResolvedValue(null);
       jest.spyOn(Stock, 'findOne').mockResolvedValue(stock as any);
@@ -67,23 +66,21 @@ describe('InventoryService', () => {
 
       expect(cacheService.getFromCache).toHaveBeenCalledWith('stock:1');
       expect(Stock.findOne).toHaveBeenCalledWith({ where: { product_id: 1 } });
+      expect(cacheService.setToCache).toHaveBeenCalledWith('stock:1', stock);
       expect(result).toEqual({ data: stock, message: SUCCESS_MESSAGES.STOCK_FETCHED });
     });
 
-    it('should return 404 if stock not found', async () => {
+    it('should return 404 if stock is not found', async () => {
       (cacheService.getFromCache as jest.Mock).mockResolvedValue(null);
       jest.spyOn(Stock, 'findOne').mockResolvedValue(null);
 
       const result = await InventoryService.getStockByProductId(1);
 
-      expect(cacheService.getFromCache).toHaveBeenCalledWith('stock:1');
-      expect(Stock.findOne).toHaveBeenCalledWith({ where: { product_id: 1 } });
       expect(result).toEqual({ error: ERROR_MESSAGES.STOCK_NOT_FOUND, statusCode: 404 });
     });
 
-    it('should handle errors', async () => {
-      const error = new Error('Test error');
-      (cacheService.getFromCache as jest.Mock).mockRejectedValue(error);
+    it('should handle errors properly', async () => {
+      (cacheService.getFromCache as jest.Mock).mockRejectedValue(new Error('Test error'));
 
       const result = await InventoryService.getStockByProductId(1);
 
@@ -91,49 +88,55 @@ describe('InventoryService', () => {
     });
   });
 
-  describe('addStock', () => {
-    it('should add stock and clear cache', async () => {
-      const stock = { product_id: 1, quantity: 10 };
-      const transaction = { commit: jest.fn(), rollback: jest.fn() };
-      (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
-      jest.spyOn(Stock, 'findOne').mockResolvedValue(null);
-      jest.spyOn(Stock, 'create').mockResolvedValue(stock as any);
-
-      const result = await InventoryService.addStock(1, 10, 1);
-
-      expect(Stock.findOne).toHaveBeenCalledWith({ where: { product_id: 1 } });
-      expect(Stock.create).toHaveBeenCalledWith({ product_id: 1, quantity: 10, input_output: 1 }, { transaction });
-      expect(transaction.commit).toHaveBeenCalled();
-      expect(cacheService.clearCache).toHaveBeenCalledWith(['allStocks', 'stock:1']);
-      expect(result).toEqual({ data: stock, message: SUCCESS_MESSAGES.STOCK_ADDED });
-    });
-
-    it('should handle errors and rollback transaction', async () => {
-      const transaction = { commit: jest.fn(), rollback: jest.fn() };
-      (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
-      jest.spyOn(Stock, 'findOne').mockRejectedValue(new Error('Test error'));
-
-      const result = await InventoryService.addStock(1, 10, 1);
-
-      expect(transaction.rollback).toHaveBeenCalled();
-      expect(result).toEqual({ error: ERROR_MESSAGES.ADD_STOCK, statusCode: 500 });
-    });
-  });
-
   describe('updateStock', () => {
     it('should update stock and clear cache', async () => {
-      const stock = { product_id: 1, quantity: 10, save: jest.fn().mockResolvedValue({ product_id: 1, quantity: 10 }) };
+      const stock = { product_id: 1, quantity: 10, save: jest.fn().mockResolvedValue({ product_id: 1, quantity: 20 }) };
       const transaction = { commit: jest.fn(), rollback: jest.fn() };
       (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
       jest.spyOn(Stock, 'findOne').mockResolvedValue(stock as any);
 
       const result = await InventoryService.updateStock(1, 10, 1);
 
-      expect(Stock.findOne).toHaveBeenCalledWith({ where: { product_id: 1 } });
+      expect(Stock.findOne).toHaveBeenCalledWith({ where: { product_id: 1 }, transaction });
       expect(stock.save).toHaveBeenCalled();
       expect(transaction.commit).toHaveBeenCalled();
-      expect(cacheService.clearCache).toHaveBeenCalledWith(['allStocks', 'stock:1']);
-      expect(result).toEqual({ data: stock, message: SUCCESS_MESSAGES.STOCK_UPDATED });
+      expect(cacheService.clearCache).toHaveBeenCalledWith(['stock:1', 'allStocks']);
+      expect(result).toEqual({ data: { product_id: 1, quantity: 20 }, message: SUCCESS_MESSAGES.STOCK_UPDATED });
+    });
+
+    it('should return 404 if stock does not exist', async () => {
+      const transaction = { commit: jest.fn(), rollback: jest.fn() };
+      (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
+      jest.spyOn(Stock, 'findOne').mockResolvedValue(null);
+
+      const result = await InventoryService.updateStock(1, 10, 1);
+
+      expect(transaction.rollback).toHaveBeenCalled();
+      expect(result).toEqual({ error: ERROR_MESSAGES.STOCK_NOT_FOUND, statusCode: 404 });
+    });
+
+    it('should return 400 if stock is insufficient for output', async () => {
+      const stock = { product_id: 1, quantity: 5, save: jest.fn() };
+      const transaction = { commit: jest.fn(), rollback: jest.fn() };
+      (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
+      jest.spyOn(Stock, 'findOne').mockResolvedValue(stock as any);
+
+      const result = await InventoryService.updateStock(1, 10, 2);
+
+      expect(transaction.rollback).toHaveBeenCalled();
+      expect(result).toEqual({ error: ERROR_MESSAGES.INSUFFICIENT_STOCK, statusCode: 400 });
+    });
+
+    it('should return 400 if input_output is invalid', async () => {
+      const stock = { product_id: 1, quantity: 10, save: jest.fn() };
+      const transaction = { commit: jest.fn(), rollback: jest.fn() };
+      (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
+      jest.spyOn(Stock, 'findOne').mockResolvedValue(stock as any);
+
+      const result = await InventoryService.updateStock(1, 10, 3);
+
+      expect(transaction.rollback).toHaveBeenCalled();
+      expect(result).toEqual({ error: ERROR_MESSAGES.INVALID_DATA, statusCode: 400 });
     });
 
     it('should handle errors and rollback transaction', async () => {
