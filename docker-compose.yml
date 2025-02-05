@@ -9,15 +9,19 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: ms-inventory
     ports:
-      - "6432:5432"
+      - "7432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      microservicios-red
 
   redis:
     image: redis:7
     container_name: ms-inventory_redis
     ports:
-      - "7379:6379"
+      - "8379:6379"
+    networks:
+      microservicios-red
 
   app:
     build:
@@ -43,6 +47,12 @@ services:
     volumes:
       - .:/app
     command: npm run dev
+    networks:
+      microservicios-red
 
 volumes:
   postgres_data:
+
+networks:
+  microservicios-red:
+    external: true
