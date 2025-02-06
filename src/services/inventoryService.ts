@@ -25,8 +25,8 @@ class InventoryService {
     }
   }
 
-  async getStockByProductId(product_id: number): Promise<StockResponse> {
-    const cacheKey = `stock:${product_id}`;
+  async getStockByProductId(productId: number): Promise<StockResponse> {
+    const cacheKey = `stock:${productId}`;
     try {
       // Intentar obtener los datos desde la caché
       const cachedStock = await cacheService.getFromCache(cacheKey);
@@ -35,7 +35,7 @@ class InventoryService {
       }
 
       // Obtener los datos desde la base de datos
-      const stock = await Stock.findOne({ where: { product_id } });
+      const stock = await Stock.findOne({ where: { productId } });
       if (stock) {
         // Almacenar los datos en la caché
         await cacheService.setToCache(cacheKey, stock);
@@ -48,11 +48,11 @@ class InventoryService {
     }
   }
 
-  async addStock(product_id: number, quantity: number, input_output: number): Promise<StockResponse> {
+  async addStock(productId: number, quantity: number, input_output: number): Promise<StockResponse> {
     const transaction = await dbService.transaction();
     try {
       const existingStock = await Stock.findOne({
-        where: { product_id, input_output: 1 },
+        where: { productId, input_output: 1 },
         transaction,
       });
 
@@ -62,13 +62,13 @@ class InventoryService {
         updatedStock = await existingStock.save({ transaction });
       } else {
         updatedStock = await Stock.create(
-          { product_id, quantity, input_output },
+          { productId, quantity, input_output },
           { transaction }
         );
       }
 
       await transaction.commit();
-      await cacheService.clearCache([`stock:${product_id}`, 'allStocks']);
+      await cacheService.clearCache([`stock:${productId}`, 'allStocks']);
       return { data: updatedStock, message: SUCCESS_MESSAGES.STOCK_ADDED };
     } catch (error) {
       await transaction.rollback();
@@ -77,10 +77,10 @@ class InventoryService {
     }
   }
 
-  async updateStock(product_id: number, quantity: number, input_output: number): Promise<StockResponse> {
+  async updateStock(productId: number, quantity: number, input_output: number): Promise<StockResponse> {
     const transaction = await dbService.transaction();
     try {
-      const stock = await Stock.findOne({ where: { product_id }, transaction });
+      const stock = await Stock.findOne({ where: { productId }, transaction });
       if (!stock) {
         await transaction.rollback();
         return { error: ERROR_MESSAGES.STOCK_NOT_FOUND, statusCode: 404 };
@@ -101,7 +101,7 @@ class InventoryService {
 
       const updatedStock = await stock.save({ transaction });
       await transaction.commit();
-      await cacheService.clearCache([`stock:${product_id}`, 'allStocks']);
+      await cacheService.clearCache([`stock:${productId}`, 'allStocks']);
       return { data: updatedStock, message: SUCCESS_MESSAGES.STOCK_UPDATED };
     } catch (error) {
       await transaction.rollback();

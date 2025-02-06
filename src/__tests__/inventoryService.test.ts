@@ -15,7 +15,7 @@ describe('InventoryService', () => {
 
   describe('getAllStocks', () => {
     it('should return all stocks from cache', async () => {
-      const cachedStocks = [{ product_id: 1, quantity: 10 }];
+      const cachedStocks = [{ productId: 1, quantity: 10 }];
       (cacheService.getFromCache as jest.Mock).mockResolvedValue(cachedStocks);
 
       const result = await InventoryService.getAllStocks();
@@ -25,7 +25,7 @@ describe('InventoryService', () => {
     });
 
     it('should return all stocks from database if not in cache and set to cache', async () => {
-      const stocks = [{ product_id: 1, quantity: 10 }];
+      const stocks = [{ productId: 1, quantity: 10 }];
       (cacheService.getFromCache as jest.Mock).mockResolvedValue(null);
       jest.spyOn(Stock, 'findAll').mockResolvedValue(stocks as any);
 
@@ -48,7 +48,7 @@ describe('InventoryService', () => {
 
   describe('getStockByProductId', () => {
     it('should return stock from cache', async () => {
-      const cachedStock = { product_id: 1, quantity: 10 };
+      const cachedStock = { productId: 1, quantity: 10 };
       (cacheService.getFromCache as jest.Mock).mockResolvedValue(cachedStock);
 
       const result = await InventoryService.getStockByProductId(1);
@@ -58,14 +58,14 @@ describe('InventoryService', () => {
     });
 
     it('should return stock from database if not in cache and set to cache', async () => {
-      const stock = { product_id: 1, quantity: 10 };
+      const stock = { productId: 1, quantity: 10 };
       (cacheService.getFromCache as jest.Mock).mockResolvedValue(null);
       jest.spyOn(Stock, 'findOne').mockResolvedValue(stock as any);
 
       const result = await InventoryService.getStockByProductId(1);
 
       expect(cacheService.getFromCache).toHaveBeenCalledWith('stock:1');
-      expect(Stock.findOne).toHaveBeenCalledWith({ where: { product_id: 1 } });
+      expect(Stock.findOne).toHaveBeenCalledWith({ where: { productId: 1 } });
       expect(cacheService.setToCache).toHaveBeenCalledWith('stock:1', stock);
       expect(result).toEqual({ data: stock, message: SUCCESS_MESSAGES.STOCK_FETCHED });
     });
@@ -90,18 +90,18 @@ describe('InventoryService', () => {
 
   describe('updateStock', () => {
     it('should update stock and clear cache', async () => {
-      const stock = { product_id: 1, quantity: 10, save: jest.fn().mockResolvedValue({ product_id: 1, quantity: 20 }) };
+      const stock = { productId: 1, quantity: 10, save: jest.fn().mockResolvedValue({ productId: 1, quantity: 20 }) };
       const transaction = { commit: jest.fn(), rollback: jest.fn() };
       (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
       jest.spyOn(Stock, 'findOne').mockResolvedValue(stock as any);
 
       const result = await InventoryService.updateStock(1, 10, 1);
 
-      expect(Stock.findOne).toHaveBeenCalledWith({ where: { product_id: 1 }, transaction });
+      expect(Stock.findOne).toHaveBeenCalledWith({ where: { productId: 1 }, transaction });
       expect(stock.save).toHaveBeenCalled();
       expect(transaction.commit).toHaveBeenCalled();
       expect(cacheService.clearCache).toHaveBeenCalledWith(['stock:1', 'allStocks']);
-      expect(result).toEqual({ data: { product_id: 1, quantity: 20 }, message: SUCCESS_MESSAGES.STOCK_UPDATED });
+      expect(result).toEqual({ data: { productId: 1, quantity: 20 }, message: SUCCESS_MESSAGES.STOCK_UPDATED });
     });
 
     it('should return 404 if stock does not exist', async () => {
@@ -116,7 +116,7 @@ describe('InventoryService', () => {
     });
 
     it('should return 400 if stock is insufficient for output', async () => {
-      const stock = { product_id: 1, quantity: 5, save: jest.fn() };
+      const stock = { productId: 1, quantity: 5, save: jest.fn() };
       const transaction = { commit: jest.fn(), rollback: jest.fn() };
       (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
       jest.spyOn(Stock, 'findOne').mockResolvedValue(stock as any);
@@ -128,7 +128,7 @@ describe('InventoryService', () => {
     });
 
     it('should return 400 if input_output is invalid', async () => {
-      const stock = { product_id: 1, quantity: 10, save: jest.fn() };
+      const stock = { productId: 1, quantity: 10, save: jest.fn() };
       const transaction = { commit: jest.fn(), rollback: jest.fn() };
       (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
       jest.spyOn(Stock, 'findOne').mockResolvedValue(stock as any);

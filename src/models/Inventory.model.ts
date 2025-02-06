@@ -15,7 +15,7 @@ class Stock extends Model {
         type: DataType.INTEGER,
         allowNull: false
     })
-    declare product_id: number;
+    declare productId: number;
 
     @Default(DataType.NOW) 
     @Column({

@@ -90,6 +90,6 @@ jest.setTimeout(30000)
 ## Rutas de la API
 
 - **GET** `/api/inventory/`: Obtener todos los registros de inventario.
-- **GET** `/api/inventory/:product_id`: Obtener stock por ID de producto.
+- **GET** `/api/inventory/:productId`: Obtener stock por ID de producto.
 - **POST** `/api/inventory/`: Agregar nuevo registro de inventario.
 - **PUT** `/api/inventory/update`: Modificar la cantidad en el inventario.

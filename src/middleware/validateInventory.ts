@@ -24,9 +24,9 @@ export const validateQuantity = (req: Request, res: Response, next: NextFunction
 };
 
 export const validateProductId = (req: Request, res: Response, next: NextFunction) => {
-  const { product_id } = req.body;
+  const { productId } = req.body;
   
-  if (!product_id) {
+  if (!productId) {
     return res.status(HTTP.BAD_REQUEST).json({
       message: ERROR_MESSAGES.INVALID_DATA
     });

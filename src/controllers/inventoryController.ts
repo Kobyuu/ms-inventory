@@ -17,9 +17,9 @@ class InventoryController {
   }
 
   static async getStockByProductId(req: Request, res: Response): Promise<Response> {
-    const { product_id } = req.params;
+    const { productId } = req.params;
     try {
-      const stock = await inventoryService.getStockByProductId(Number(product_id));
+      const stock = await inventoryService.getStockByProductId(Number(productId));
       if (!stock) {
         return res.status(HTTP.NOT_FOUND).json({
           message: ERROR_MESSAGES.STOCK_NOT_FOUND
@@ -35,16 +35,16 @@ class InventoryController {
   }
 
   static async addStock(req: Request, res: Response): Promise<Response> {
-    const { product_id, quantity, input_output } = req.body;
+    const { productId, quantity, input_output } = req.body;
     if (input_output !== INPUT_OUTPUT.INPUT) {
       return res.status(HTTP.BAD_REQUEST).json({ message: ERROR_MESSAGES.INPUT_OUTPUT });
     }
     try {
-      const productResponse = await productService.getProductById(product_id);
+      const productResponse = await productService.getProductById(productId);
       if (productResponse.statusCode === HTTP.NOT_FOUND) {
         return res.status(HTTP.NOT_FOUND).json({ message: ERROR_MESSAGES.PRODUCT_NOT_FOUND });
       }
-      const addedStock = await inventoryService.addStock(product_id, quantity, input_output);
+      const addedStock = await inventoryService.addStock(productId, quantity, input_output);
       return res.status(HTTP.CREATED).json({
         message: SUCCESS_MESSAGES.STOCK_ADDED,
         updatedStock: addedStock
@@ -58,16 +58,16 @@ class InventoryController {
   }
 
   static async updateStock(req: Request, res: Response): Promise<Response> {
-    const { product_id, quantity, input_output } = req.body;
+    const { productId, quantity, input_output } = req.body;
     if (quantity <= 0) {
       return res.status(HTTP.BAD_REQUEST).json({ message: ERROR_MESSAGES.INVALID_DATA });
     }
     try {
-      const productResponse = await productService.getProductById(product_id);
+      const productResponse = await productService.getProductById(productId);
       if (productResponse.statusCode === HTTP.NOT_FOUND) {
         return res.status(HTTP.NOT_FOUND).json({ message: ERROR_MESSAGES.PRODUCT_NOT_FOUND });
       }
-      const updatedStock = await inventoryService.updateStock(product_id, quantity, input_output);
+      const updatedStock = await inventoryService.updateStock(productId, quantity, input_output);
       return res.status(HTTP.OK).json({
         message: SUCCESS_MESSAGES.STOCK_UPDATED,
         updatedStock

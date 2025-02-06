@@ -1,6 +1,6 @@
 // Stock related interfaces
 export interface StockAttributes {
-  product_id: number;
+  productId: number;
   quantity: number;
   input_output: number;
   createdAt?: Date;

@@ -11,7 +11,7 @@ router.get('/',
   InventoryController.getAllStocks
 );
 
-router.get('/:product_id',
+router.get('/:productId',
   productIdValidation,
   withCircuitBreaker,
   InventoryController.getStockByProductId

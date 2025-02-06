@@ -3,9 +3,9 @@ import { CONFIG } from '../config/constants/enviroment';
 import { HTTP, ERROR_MESSAGES } from '../config/constants';
 
 class ProductService {
-  async getProductById(product_id: number) {
+  async getProductById(productId: number) {
     try {
-      const productResponse = await axiosClient.get(`${CONFIG.PRODUCT_SERVICE_URL}/${product_id}`);
+      const productResponse = await axiosClient.get(`${CONFIG.PRODUCT_SERVICE_URL}/${productId}`);
       if (productResponse.status === HTTP.NOT_FOUND) {
         return { error: ERROR_MESSAGES.PRODUCT_NOT_FOUND, statusCode: HTTP.NOT_FOUND };
       }
