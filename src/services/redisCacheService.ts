@@ -1,4 +1,4 @@
-import redisClient from '../config/redis';
+import redisClient from '../config/redisClient';
 import { CONFIG } from '../config/constants/enviroment';
 import { CacheService } from '../types/types';
 
@@ -23,7 +23,3 @@ class RedisCacheService implements CacheService {
 }
 
 export const cacheService = new RedisCacheService();
-
-export function logSuccessMessage(message: string) {
-  console.log(message);
-}

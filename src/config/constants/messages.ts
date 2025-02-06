@@ -5,7 +5,6 @@ export const ERROR_MESSAGES = {
     GET_STOCK_BY_PRODUCT_ID: 'Error al obtener stock',
     ADD_STOCK: 'Error al agregar stock',
     UPDATE_STOCK: 'Error al modificar stock',
-    REVERT_PURCHASE: 'Error al revertir compra y actualizar stock',
     PRODUCT_NOT_FOUND: 'Producto no encontrado',
     STOCK_NOT_FOUND: 'Stock no encontrado',
     INSUFFICIENT_STOCK: 'Cantidad insuficiente de stock para esta salida',
@@ -18,20 +17,15 @@ export const ERROR_MESSAGES = {
     INSUFFICIENT_REDUCTION_RECORDS: 'No hay suficientes registros de reducción para revertir esta cantidad',
     RATE_LIMIT_EXCEEDED: 'Demasiadas solicitudes desde esta IP, por favor intente de nuevo más tarde.',
     SERVICE_UNAVAILABLE: 'Servicio no disponible, por favor intente de nuevo más tarde.',
-    INVALID_OPERATION: 'Operacion invalida',
-    UNKNOWN_ERROR: 'Error desconocido',
-    DELETE_PRODUCT: 'Error al eliminar producto' 
 };
 
 export const SUCCESS_MESSAGES = {
-    STOCK_REVERTED: 'Stock revertido exitosamente',
     STOCK_ADDED: 'Stock agregado exitosamente',
     STOCK_UPDATED: 'Stock actualizado exitosamente',
     DB_CONNECTION: 'Conexión exitosa a la base de datos',
     REDIS_CONNECTION: 'Conectado a Redis',
     STOCK_FETCHED: 'Stock obtenido exitosamente',
     ALL_STOCKS_FETCHED: 'Todos los stocks obtenidos exitosamente',
-    PRODUCT_DELETED: 'Producto eliminado exitosamente'
 };
 
 export const CIRCUIT_BREAKER_MESSAGES = {

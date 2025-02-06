@@ -1,11 +1,11 @@
 import InventoryService from '../services/inventoryService';
 import Stock from '../models/Inventory.model';
-import { cacheService } from '../utils/utils';
+import { cacheService } from '../services/redisCacheService';
 import { dbService } from '../config/db';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '../config/constants';
 
 // Crear mocks manualmente
-jest.mock('../utils/utils');
+jest.mock('../services/redisCacheService');
 jest.mock('../config/db');
 
 describe('InventoryService', () => {

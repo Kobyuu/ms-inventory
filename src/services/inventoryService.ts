@@ -1,8 +1,8 @@
 import { StockResponse } from '../types/types';
 import Stock from '../models/Inventory.model';
 import { dbService } from '../config/db';
-import { cacheService } from '../utils/utils';
-import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '../config/constants';
+import { cacheService } from './redisCacheService';
+import { ERROR_MESSAGES, SUCCESS_MESSAGES, HTTP } from '../config/constants';
 
 class InventoryService {
   async getAllStocks(): Promise<StockResponse> {
@@ -21,7 +21,7 @@ class InventoryService {
       return { data: stocks, message: SUCCESS_MESSAGES.ALL_STOCKS_FETCHED };
     } catch (error) {
       console.error(ERROR_MESSAGES.GET_ALL_STOCKS, error);
-      return { error: ERROR_MESSAGES.GET_ALL_STOCKS, statusCode: 500 };
+      return { error: ERROR_MESSAGES.GET_ALL_STOCKS, statusCode: HTTP.INTERNAL_SERVER_ERROR };
     }
   }
 
@@ -41,10 +41,10 @@ class InventoryService {
         await cacheService.setToCache(cacheKey, stock);
         return { data: stock, message: SUCCESS_MESSAGES.STOCK_FETCHED };
       }
-      return { error: ERROR_MESSAGES.STOCK_NOT_FOUND, statusCode: 404 };
+      return { error: ERROR_MESSAGES.STOCK_NOT_FOUND, statusCode: HTTP.NOT_FOUND };
     } catch (error) {
       console.error(ERROR_MESSAGES.GET_STOCK_BY_PRODUCT_ID, error);
-      return { error: ERROR_MESSAGES.GET_STOCK_BY_PRODUCT_ID, statusCode: 500 };
+      return { error: ERROR_MESSAGES.GET_STOCK_BY_PRODUCT_ID, statusCode: HTTP.INTERNAL_SERVER_ERROR };
     }
   }
 
@@ -73,7 +73,7 @@ class InventoryService {
     } catch (error) {
       await transaction.rollback();
       console.error(ERROR_MESSAGES.ADD_STOCK, error);
-      return { error: ERROR_MESSAGES.ADD_STOCK, statusCode: 500 };
+      return { error: ERROR_MESSAGES.ADD_STOCK, statusCode: HTTP.INTERNAL_SERVER_ERROR };
     }
   }
 
@@ -83,7 +83,7 @@ class InventoryService {
       const stock = await Stock.findOne({ where: { productId }, transaction });
       if (!stock) {
         await transaction.rollback();
-        return { error: ERROR_MESSAGES.STOCK_NOT_FOUND, statusCode: 404 };
+        return { error: ERROR_MESSAGES.STOCK_NOT_FOUND, statusCode: HTTP.NOT_FOUND };
       }
 
       if (input_output === 1) {
@@ -91,12 +91,12 @@ class InventoryService {
       } else if (input_output === 2) {
         if (stock.quantity < quantity) {
           await transaction.rollback();
-          return { error: ERROR_MESSAGES.INSUFFICIENT_STOCK, statusCode: 400 };
+          return { error: ERROR_MESSAGES.INSUFFICIENT_STOCK, statusCode: HTTP.BAD_REQUEST };
         }
         stock.quantity -= quantity;
       } else {
         await transaction.rollback();
-        return { error: ERROR_MESSAGES.INVALID_DATA, statusCode: 400 };
+        return { error: ERROR_MESSAGES.INVALID_DATA, statusCode: HTTP.BAD_REQUEST };
       }
 
       const updatedStock = await stock.save({ transaction });
@@ -106,7 +106,7 @@ class InventoryService {
     } catch (error) {
       await transaction.rollback();
       console.error(ERROR_MESSAGES.UPDATE_STOCK, error);
-      return { error: ERROR_MESSAGES.UPDATE_STOCK, statusCode: 500 };
+      return { error: ERROR_MESSAGES.UPDATE_STOCK, statusCode: HTTP.INTERNAL_SERVER_ERROR };
     }
   }
 }
