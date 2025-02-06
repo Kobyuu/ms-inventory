@@ -10,7 +10,7 @@ Microservicio para gestionar el inventario de productos con características ava
 
 1. Clona el repositorio:
     ```sh
-    git clone https://github.com/yourusername/ms-inventory.git
+    git clone https://github.com/Kobyuu/ms-inventory.git
     ```
 2. Navega al directorio del proyecto:
     ```sh
