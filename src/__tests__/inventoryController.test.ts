@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import inventoryService from '../services/inventoryService';
 import InventoryController from '../controllers/inventoryController';
 import axiosClient from '../config/axiosClient';
-import { config } from '../config/constants/enviroment';
+import { CONFIG } from '../config/constants/enviroment';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES, INPUT_OUTPUT, HTTP } from '../config/constants';
 
 jest.mock('../services/inventoryService');
@@ -101,7 +101,7 @@ describe('InventoryController', () => {
 
       await InventoryController.addStock(req as Request, res as Response);
 
-      expect(axiosClient.get).toHaveBeenCalledWith(`${config.productServiceUrl}/1`);
+      expect(axiosClient.get).toHaveBeenCalledWith(`${CONFIG.PRODUCT_SERVICE_URL}/1`);
       expect(inventoryService.addStock).toHaveBeenCalledWith(1, 10, INPUT_OUTPUT.INPUT);
       expect(res.status).toHaveBeenCalledWith(HTTP.CREATED);
       expect(res.json).toHaveBeenCalledWith({ message: SUCCESS_MESSAGES.STOCK_ADDED, updatedStock: stock });
@@ -122,7 +122,7 @@ describe('InventoryController', () => {
 
       await InventoryController.addStock(req as Request, res as Response);
 
-      expect(axiosClient.get).toHaveBeenCalledWith(`${config.productServiceUrl}/1`);
+      expect(axiosClient.get).toHaveBeenCalledWith(`${CONFIG.PRODUCT_SERVICE_URL}/1`);
       expect(res.status).toHaveBeenCalledWith(HTTP.NOT_FOUND);
       expect(res.json).toHaveBeenCalledWith({ message: ERROR_MESSAGES.PRODUCT_NOT_FOUND });
     });
@@ -134,7 +134,7 @@ describe('InventoryController', () => {
 
       await InventoryController.addStock(req as Request, res as Response);
 
-      expect(axiosClient.get).toHaveBeenCalledWith(`${config.productServiceUrl}/1`);
+      expect(axiosClient.get).toHaveBeenCalledWith(`${CONFIG.PRODUCT_SERVICE_URL}/1`);
       expect(res.status).toHaveBeenCalledWith(HTTP.INTERNAL_SERVER_ERROR);
       expect(res.json).toHaveBeenCalledWith({ message: ERROR_MESSAGES.ADD_STOCK, error: error.message });
     });
@@ -149,7 +149,7 @@ describe('InventoryController', () => {
 
       await InventoryController.updateStock(req as Request, res as Response);
 
-      expect(axiosClient.get).toHaveBeenCalledWith(`${config.productServiceUrl}/1`);
+      expect(axiosClient.get).toHaveBeenCalledWith(`${CONFIG.PRODUCT_SERVICE_URL}/1`);
       expect(inventoryService.updateStock).toHaveBeenCalledWith(1, 10, INPUT_OUTPUT.OUTPUT);
       expect(res.status).toHaveBeenCalledWith(HTTP.OK);
       expect(res.json).toHaveBeenCalledWith({ message: SUCCESS_MESSAGES.STOCK_UPDATED, updatedStock: stock });
@@ -170,7 +170,7 @@ describe('InventoryController', () => {
 
       await InventoryController.updateStock(req as Request, res as Response);
 
-      expect(axiosClient.get).toHaveBeenCalledWith(`${config.productServiceUrl}/1`);
+      expect(axiosClient.get).toHaveBeenCalledWith(`${CONFIG.PRODUCT_SERVICE_URL}/1`);
       expect(res.status).toHaveBeenCalledWith(HTTP.NOT_FOUND);
       expect(res.json).toHaveBeenCalledWith({ message: ERROR_MESSAGES.PRODUCT_NOT_FOUND });
     });
@@ -182,7 +182,7 @@ describe('InventoryController', () => {
 
       await InventoryController.updateStock(req as Request, res as Response);
 
-      expect(axiosClient.get).toHaveBeenCalledWith(`${config.productServiceUrl}/1`);
+      expect(axiosClient.get).toHaveBeenCalledWith(`${CONFIG.PRODUCT_SERVICE_URL}/1`);
       expect(res.status).toHaveBeenCalledWith(HTTP.INTERNAL_SERVER_ERROR);
       expect(res.json).toHaveBeenCalledWith({ message: ERROR_MESSAGES.UPDATE_STOCK, error: error.message });
     });
@@ -218,7 +218,7 @@ describe('InventoryController.updateStock', () => {
 
     await InventoryController.updateStock(req as Request, res as Response);
 
-    expect(axiosClient.get).toHaveBeenCalledWith(`${config.productServiceUrl}/1`);
+    expect(axiosClient.get).toHaveBeenCalledWith(`${CONFIG.PRODUCT_SERVICE_URL}/1`);
     expect(res.status).toHaveBeenCalledWith(HTTP.NOT_FOUND);
     expect(res.json).toHaveBeenCalledWith({ message: ERROR_MESSAGES.PRODUCT_NOT_FOUND });
   });
@@ -230,7 +230,7 @@ describe('InventoryController.updateStock', () => {
 
     await InventoryController.updateStock(req as Request, res as Response);
 
-    expect(axiosClient.get).toHaveBeenCalledWith(`${config.productServiceUrl}/1`);
+    expect(axiosClient.get).toHaveBeenCalledWith(`${CONFIG.PRODUCT_SERVICE_URL}/1`);
     expect(res.status).toHaveBeenCalledWith(HTTP.INTERNAL_SERVER_ERROR);
     expect(res.json).toHaveBeenCalledWith({
       message: ERROR_MESSAGES.UPDATE_STOCK,

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import axiosClient from '../config/axiosClient';
-import { config } from '../config/constants/enviroment';
+import { CONFIG } from '../config/constants/enviroment';
 import { HTTP, ERROR_MESSAGES, SUCCESS_MESSAGES, INPUT_OUTPUT } from '../config/constants';
 import inventoryService from '../services/inventoryService';
 
@@ -42,7 +42,7 @@ class InventoryController {
       return res.status(HTTP.BAD_REQUEST).json({ message: ERROR_MESSAGES.INPUT_OUTPUT });
     }
     try {
-      const productResponse = await axiosClient.get(`${config.productServiceUrl}/${product_id}`);
+      const productResponse = await axiosClient.get(`${CONFIG.PRODUCT_SERVICE_URL}/${product_id}`);
       if (productResponse.status === HTTP.NOT_FOUND) {
         return res.status(HTTP.NOT_FOUND).json({ message: ERROR_MESSAGES.PRODUCT_NOT_FOUND });
       }
@@ -66,7 +66,7 @@ class InventoryController {
       return res.status(HTTP.BAD_REQUEST).json({ message: ERROR_MESSAGES.INVALID_DATA });
     }
     try {
-      const productResponse = await axiosClient.get(`${config.productServiceUrl}/${product_id}`);
+      const productResponse = await axiosClient.get(`${CONFIG.PRODUCT_SERVICE_URL}/${product_id}`);
       if (productResponse.status === HTTP.NOT_FOUND) {
         return res.status(HTTP.NOT_FOUND).json({ message: ERROR_MESSAGES.PRODUCT_NOT_FOUND });
       }

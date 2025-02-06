@@ -1,5 +1,5 @@
 import redisClient from '../config/redis';
-import { config } from '../config/constants/enviroment';
+import { CONFIG } from '../config/constants/enviroment';
 import { CacheService } from '../types/types';
 
 class RedisCacheService implements CacheService {
@@ -12,7 +12,7 @@ class RedisCacheService implements CacheService {
   }
 
   async setToCache(key: string, data: any): Promise<void> {
-    await redisClient.set(key, JSON.stringify(data), 'EX', config.cacheExpiry);
+    await redisClient.set(key, JSON.stringify(data), 'EX', CONFIG.CACHE_EXPIRY);
   }
 
   async clearCache(keys: string[]): Promise<void> {

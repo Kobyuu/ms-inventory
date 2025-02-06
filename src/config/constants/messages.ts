@@ -20,7 +20,7 @@ export const ERROR_MESSAGES = {
     SERVICE_UNAVAILABLE: 'Servicio no disponible, por favor intente de nuevo más tarde.',
     INVALID_OPERATION: 'Operacion invalida',
     UNKNOWN_ERROR: 'Error desconocido',
-    DELETE_PRODUCT: 'Error al eliminar producto' // Nuevo mensaje de error
+    DELETE_PRODUCT: 'Error al eliminar producto' 
 };
 
 export const SUCCESS_MESSAGES = {
@@ -31,7 +31,7 @@ export const SUCCESS_MESSAGES = {
     REDIS_CONNECTION: 'Conectado a Redis',
     STOCK_FETCHED: 'Stock obtenido exitosamente',
     ALL_STOCKS_FETCHED: 'Todos los stocks obtenidos exitosamente',
-    PRODUCT_DELETED: 'Producto eliminado exitosamente' // Nuevo mensaje de éxito
+    PRODUCT_DELETED: 'Producto eliminado exitosamente'
 };
 
 export const CIRCUIT_BREAKER_MESSAGES = {
@@ -41,5 +41,6 @@ export const CIRCUIT_BREAKER_MESSAGES = {
 };
 
 export const DYNAMIC_MESSAGES = {
-    SERVER_START: (port: number) => `REST API en el puerto ${port}`
+    SERVER_START: (port: number) => `REST API en el puerto ${port}`,
+    RETRY_ATTEMPT: (retryCount: number) => `Intento de reintento: ${retryCount}` 
 };

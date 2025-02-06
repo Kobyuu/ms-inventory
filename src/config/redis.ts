@@ -1,6 +1,6 @@
 import Redis from 'ioredis';
 import RedisMock from 'ioredis-mock';
-import { config } from './constants/enviroment';
+import { CONFIG } from './constants/enviroment';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES, DEFAULTS } from './constants';
 
 const parseRedisUrl = (url: string) => {
@@ -20,7 +20,7 @@ const parseRedisUrl = (url: string) => {
   }
 };
 
-const redisConfig = parseRedisUrl(config.redisUrl);
+const redisConfig = parseRedisUrl(CONFIG.REDIS_URL);
 
 const redisClient = process.env.NODE_ENV === 'test' 
   ? new RedisMock() 
