@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
-import axiosClient from '../config/axiosClient';
-import { CONFIG } from '../config/constants/enviroment';
 import { HTTP, ERROR_MESSAGES, SUCCESS_MESSAGES, INPUT_OUTPUT } from '../config/constants';
 import inventoryService from '../services/inventoryService';
+import productService from '../services/productService';
 
 class InventoryController {
   static async getAllStocks(req: Request, res: Response): Promise<Response> {
@@ -37,13 +36,12 @@ class InventoryController {
 
   static async addStock(req: Request, res: Response): Promise<Response> {
     const { product_id, quantity, input_output } = req.body;
-    // Validar input_output, de acuerdo al test se espera error si no es INPUT
     if (input_output !== INPUT_OUTPUT.INPUT) {
       return res.status(HTTP.BAD_REQUEST).json({ message: ERROR_MESSAGES.INPUT_OUTPUT });
     }
     try {
-      const productResponse = await axiosClient.get(`${CONFIG.PRODUCT_SERVICE_URL}/${product_id}`);
-      if (productResponse.status === HTTP.NOT_FOUND) {
+      const productResponse = await productService.getProductById(product_id);
+      if (productResponse.statusCode === HTTP.NOT_FOUND) {
         return res.status(HTTP.NOT_FOUND).json({ message: ERROR_MESSAGES.PRODUCT_NOT_FOUND });
       }
       const addedStock = await inventoryService.addStock(product_id, quantity, input_output);
@@ -61,13 +59,12 @@ class InventoryController {
 
   static async updateStock(req: Request, res: Response): Promise<Response> {
     const { product_id, quantity, input_output } = req.body;
-    // Validar que la cantidad sea mayor a 0
     if (quantity <= 0) {
       return res.status(HTTP.BAD_REQUEST).json({ message: ERROR_MESSAGES.INVALID_DATA });
     }
     try {
-      const productResponse = await axiosClient.get(`${CONFIG.PRODUCT_SERVICE_URL}/${product_id}`);
-      if (productResponse.status === HTTP.NOT_FOUND) {
+      const productResponse = await productService.getProductById(product_id);
+      if (productResponse.statusCode === HTTP.NOT_FOUND) {
         return res.status(HTTP.NOT_FOUND).json({ message: ERROR_MESSAGES.PRODUCT_NOT_FOUND });
       }
       const updatedStock = await inventoryService.updateStock(product_id, quantity, input_output);
