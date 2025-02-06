@@ -1,26 +1,9 @@
 import { Router } from 'express';
-import { body, param } from 'express-validator';
-import { handleInputErrors } from './middleware/handleInputErrors';
-import { validateInputOutput, validateQuantity, validateProductId } from './middleware/validateInventory';
+import { commonValidations, stockValidations, productIdValidation } from './middleware/validationRouter';
 import InventoryController from './controllers/inventoryController';
 import { withCircuitBreaker } from './middleware/circuitBreaker';
 
 const router = Router();
-
-// Common validation middleware
-const commonValidations = [
-  validateProductId,
-  validateQuantity,
-  validateInputOutput,
-  handleInputErrors
-];
-
-// Common stock validation middleware
-const stockValidations = [
-  body('product_id').isInt().withMessage('product_id debe ser un número entero'),
-  body('quantity').isFloat({ gt: 0 }).withMessage('quantity debe ser un número mayor que 0'),
-  body('input_output').isIn([1, 2]).withMessage('input_output debe ser 1 (entrada) o 2 (salida)')
-];
 
 // Routes with improved middleware organization
 router.get('/', 
@@ -29,8 +12,7 @@ router.get('/',
 );
 
 router.get('/:product_id',
-  param('product_id').isInt().withMessage('product_id debe ser un número entero'),
-  handleInputErrors,
+  productIdValidation,
   withCircuitBreaker,
   InventoryController.getStockByProductId
 );
