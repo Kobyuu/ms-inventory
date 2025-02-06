@@ -24,25 +24,30 @@ Microservicio para gestionar el inventario de productos con características ava
 ## Configuración
 
 1. Crea un archivo [.env](http://_vscodecontentref_/3) en la raíz del proyecto con el siguiente contenido:
-    ```env
-    # General
-    PORT=4002
-    NODE_ENV=development
+```env
+# Configuración general
+PORT=4002
 
-    # Database
-    DATABASE_URL=postgres://postgres:password@localhost:5432/ms-inventory
+# Configuración de la base de datos
+DATABASE_URL=postgres://postgres:password@localhost:5432/ms-inventory
 
-    # Services
-    PRODUCT_SERVICE_URL=http://localhost:4001/api/products
+# URL del servicio de productos
+PRODUCT_SERVICE_URL=http://localhost/api/products  
+# Cuando se testea con docker en lugar de localhost debe ir ms-catalog
 
-    # Redis
-    REDIS_URL=redis://redis:6379
-    CACHE_EXPIRY=3600
+# Configuración de Redis
+REDIS_URL=redis://localhost:6379
+# Cuando se testea con docker en lugar de localhost debe ir redis
 
-    # Retry Configuration
-    RETRY_DELAY=1000
-    RETRY_ATTEMPTS=3\
-    ```
+# Expiración de la caché en segundos
+CACHE_EXPIRY=3600
+
+#Retry delay
+RETRY_DELAY=1000
+
+#Retry attempts
+RETRY_ATTEMPTS=3
+```
 
 ## jest.config.js
 
