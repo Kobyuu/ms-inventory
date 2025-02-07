@@ -39,6 +39,7 @@ services:
       RETRY_DELAY: 1000
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      REDIS_RETRY_DELAY: 2000  # Agregado para coincidir con DEFAULTS
     ports:
       - "5002:4002"
     depends_on:
