@@ -13,7 +13,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      microservicios-red
+      - microservicios-red
 
   redis:
     image: redis:7
@@ -21,7 +21,7 @@ services:
     ports:
       - "8379:6379"
     networks:
-      microservicios-red
+      - microservicios-red
 
   app:
     build:
@@ -48,7 +48,7 @@ services:
       - .:/app
     command: npm run dev
     networks:
-      microservicios-red
+      - microservicios-red
 
 volumes:
   postgres_data:

@@ -1,13 +1,15 @@
 import '../validateEnv'; 
 import { DEFAULTS } from './defaults'; 
 
-// Exportar variables de entorno parseadas si es necesario
 export const CONFIG = {
-    DATABASE_URL: process.env.DATABASE_URL!,
     PORT: parseInt(process.env.PORT ?? DEFAULTS.PORT.toString(), 10),
-    PRODUCT_SERVICE_URL: process.env.PRODUCT_SERVICE_URL!,
-    REDIS_URL: process.env.REDIS_URL!,
+    DATABASE_URL: process.env.DATABASE_URL ?? DEFAULTS.DATABASE_URL,
+    PRODUCT_SERVICE_URL: process.env.PRODUCT_SERVICE_URL ?? DEFAULTS.PRODUCT_SERVICE_URL,
+    REDIS_URL: process.env.REDIS_URL ?? DEFAULTS.REDIS_URL,
     CACHE_EXPIRY: parseInt(process.env.CACHE_EXPIRY ?? DEFAULTS.CACHE_EXPIRY.toString(), 10),
     RETRY_ATTEMPTS: parseInt(process.env.RETRY_ATTEMPTS ?? DEFAULTS.RETRY_ATTEMPTS.toString(), 10),
     RETRY_DELAY: parseInt(process.env.RETRY_DELAY ?? DEFAULTS.RETRY_DELAY.toString(), 10),
+    REDIS_HOST: process.env.REDIS_HOST ?? DEFAULTS.REDIS_HOST,
+    REDIS_PORT: parseInt(process.env.REDIS_PORT ?? DEFAULTS.REDIS_PORT.toString(), 10),
+    REDIS_RETRY_DELAY: parseInt(process.env.REDIS_RETRY_DELAY ?? DEFAULTS.REDIS_RETRY_DELAY.toString(), 10)
 };

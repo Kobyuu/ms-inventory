@@ -9,7 +9,10 @@ const requiredEnvVars = [
     'PORT',
     'CACHE_EXPIRY',
     'RETRY_ATTEMPTS',
-    'RETRY_DELAY'
+    'RETRY_DELAY',
+    'REDIS_HOST',
+    'REDIS_PORT',
+    'REDIS_RETRY_DELAY'
 ];
 
 requiredEnvVars.forEach((env) => {
