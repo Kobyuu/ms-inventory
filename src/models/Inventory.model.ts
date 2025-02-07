@@ -8,7 +8,7 @@ import {
 
 @Table({
     tableName: 'stock',
-    timestamps: true, // createdAt, updatedAt
+    timestamps: false, 
 })
 class Stock extends Model {
     @Column({
