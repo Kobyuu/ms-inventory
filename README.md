@@ -29,15 +29,15 @@ Microservicio para gestionar el inventario de productos con características ava
 PORT=4002
 
 # Configuración de la base de datos
-DATABASE_URL=postgres://postgres:password@localhost:5432/ms-inventory
+DATABASE_URL=postgres://postgres:password@postgres:5432/ms-inventory
 
 # URL del servicio de productos
-PRODUCT_SERVICE_URL=http://localhost/api/products  
-# Cuando se testea con docker en lugar de localhost debe ir ms-catalog
+PRODUCT_SERVICE_URL=http://ms-catalog/api/products  
+# Cuando se testea con docker en lugar de ms-catalog debe ir localhost
 
 # Configuración de Redis
-REDIS_URL=redis://localhost:6379
-# Cuando se testea con docker en lugar de localhost debe ir redis
+REDIS_URL=redis://redis:6379
+# Cuando se testea con docker en lugar de redis debe ir localhost
 
 # Expiración de la caché en segundos
 CACHE_EXPIRY=3600
@@ -85,7 +85,7 @@ jest.setTimeout(30000)
     ```sh
     npm run dev
     ```
-2. El servidor estará disponible en `http://localhost:4002`.
+2. El servidor estará disponible en `http://ms-inventory:4002`.
 
 ## Rutas de la API
 
