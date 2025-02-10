@@ -4,7 +4,6 @@ import InventoryController from './controllers/inventoryController';
 
 const router = Router();
 
-// Routes with improved middleware organization
 router.get('/', 
   InventoryController.getAllStocks
 );

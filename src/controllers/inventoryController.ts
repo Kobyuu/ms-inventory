@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { HTTP, ERROR_MESSAGES, SUCCESS_MESSAGES, INPUT_OUTPUT } from '../config/constants';
+import { HTTP, ERROR_MESSAGES, SUCCESS_MESSAGES } from '../config/constants';
 import inventoryService from '../services/inventoryService';
 import productService from '../services/productService';
 
@@ -36,13 +36,13 @@ class InventoryController {
 
   static async addStock(req: Request, res: Response): Promise<Response> {
     const { productId, quantity, input_output } = req.body;
-    if (input_output !== INPUT_OUTPUT.INPUT) {
-      return res.status(HTTP.BAD_REQUEST).json({ message: ERROR_MESSAGES.INPUT_OUTPUT });
-    }
     try {
       const productResponse = await productService.getProductById(productId);
       if (productResponse.statusCode === HTTP.NOT_FOUND) {
         return res.status(HTTP.NOT_FOUND).json({ message: ERROR_MESSAGES.PRODUCT_NOT_FOUND });
+      }
+      if (productResponse.statusCode !== HTTP.OK) {
+        return res.status(productResponse.statusCode).json({ message: productResponse.error });
       }
       const addedStock = await inventoryService.addStock(productId, quantity, input_output);
       return res.status(HTTP.CREATED).json({
@@ -59,13 +59,13 @@ class InventoryController {
 
   static async updateStock(req: Request, res: Response): Promise<Response> {
     const { productId, quantity, input_output } = req.body;
-    if (quantity <= 0) {
-      return res.status(HTTP.BAD_REQUEST).json({ message: ERROR_MESSAGES.INVALID_DATA });
-    }
     try {
       const productResponse = await productService.getProductById(productId);
       if (productResponse.statusCode === HTTP.NOT_FOUND) {
         return res.status(HTTP.NOT_FOUND).json({ message: ERROR_MESSAGES.PRODUCT_NOT_FOUND });
+      }
+      if (productResponse.statusCode !== HTTP.OK) {
+        return res.status(productResponse.statusCode).json({ message: productResponse.error });
       }
       const updatedStock = await inventoryService.updateStock(productId, quantity, input_output);
       return res.status(HTTP.OK).json({

@@ -6,12 +6,12 @@ services:
     container_name: ms-inventory_postgres
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: 1234
       POSTGRES_DB: ms-inventory
     ports:
       - "7432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_inventory:/var/lib/postgresql/data
     networks:
       - microservicios-red
 
@@ -31,8 +31,8 @@ services:
     environment:
       PORT: 4002
       NODE_ENV: production
-      DATABASE_URL: postgres://postgres:password@postgres:5432/ms-inventory
-      PRODUCT_SERVICE_URL: http://ms-catalog:4001/api/products
+      DATABASE_URL: postgres://postgres:1234@postgres:5432/ms-inventory
+      PRODUCT_SERVICE_URL: http://ms-catalog_app:4001/api/product
       REDIS_URL: redis://redis:6379
       CACHE_EXPIRY: 3600
       RETRY_ATTEMPTS: 3
@@ -52,7 +52,7 @@ services:
       - microservicios-red
 
 volumes:
-  postgres_data:
+  postgres_data_inventory:
 
 networks:
   microservicios-red:

@@ -15,7 +15,6 @@ export const commonValidations = [
 export const stockValidations = [
   body('productId').isInt().withMessage(ERROR_MESSAGES.INVALID_DATA),
   body('quantity').isFloat({ gt: 0 }).withMessage(ERROR_MESSAGES.QUANTITY),
-  body('input_output').isIn([1, 2]).withMessage(ERROR_MESSAGES.INPUT_OUTPUT),
   handleInputErrors
 ];
 

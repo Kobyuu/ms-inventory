@@ -3,7 +3,7 @@ import { HTTP, ERROR_MESSAGES, INPUT_OUTPUT } from '../config/constants';
 
 export const validateInputOutput = (req: Request, res: Response, next: NextFunction) => {
   const { input_output } = req.body;
-  
+
   if (input_output !== INPUT_OUTPUT.INPUT && input_output !== INPUT_OUTPUT.OUTPUT) {
     return res.status(HTTP.BAD_REQUEST).json({
       message: ERROR_MESSAGES.INPUT_OUTPUT

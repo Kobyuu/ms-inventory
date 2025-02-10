@@ -3,7 +3,7 @@ import { StockResponse } from '../types/types';
 import Stock from '../models/Inventory.model';
 import { dbService } from '../config/db';
 import { cacheService } from './redisCacheService';
-import { ERROR_MESSAGES, SUCCESS_MESSAGES, HTTP } from '../config/constants';
+import { ERROR_MESSAGES, SUCCESS_MESSAGES, HTTP, INPUT_OUTPUT } from '../config/constants';
 
 class InventoryService {
   async getAllStocks(): Promise<StockResponse> {
@@ -22,8 +22,8 @@ class InventoryService {
         await cacheService.setToCache(cacheKey, stocks);
         return { data: stocks, message: SUCCESS_MESSAGES.ALL_STOCKS_FETCHED };
       } catch (error) {
-        console.error(ERROR_MESSAGES.GET_ALL_STOCKS, error);
-        return { error: ERROR_MESSAGES.GET_ALL_STOCKS, statusCode: HTTP.INTERNAL_SERVER_ERROR };
+        console.error(ERROR_MESSAGES.FETCH_ALL_STOCKS, error);
+        return { error: ERROR_MESSAGES.FETCH_ALL_STOCKS, statusCode: HTTP.INTERNAL_SERVER_ERROR };
       }
     });
   }
@@ -58,7 +58,7 @@ class InventoryService {
       const transaction = await dbService.transaction();
       try {
         const existingStock = await Stock.findOne({
-          where: { productId, input_output: 1 },
+          where: { productId, input_output: INPUT_OUTPUT.INPUT },
           transaction,
         });
 
@@ -88,18 +88,22 @@ class InventoryService {
     return breaker.fire(async () => {
       const transaction = await dbService.transaction();
       try {
-        const stock = await Stock.findOne({ where: { productId }, transaction });
+        const stock = await Stock.findOne({
+          where: { productId, input_output: INPUT_OUTPUT.INPUT },
+          transaction,
+        });
+
         if (!stock) {
           await transaction.rollback();
           return { error: ERROR_MESSAGES.STOCK_NOT_FOUND, statusCode: HTTP.NOT_FOUND };
         }
 
-        if (input_output === 1) {
+        if (input_output === INPUT_OUTPUT.INPUT) {
           stock.quantity += quantity;
-        } else if (input_output === 2) {
+        } else if (input_output === INPUT_OUTPUT.OUTPUT) {
           if (stock.quantity < quantity) {
             await transaction.rollback();
-            return { error: ERROR_MESSAGES.INSUFFICIENT_STOCK, statusCode: HTTP.BAD_REQUEST };
+            return { error: ERROR_MESSAGES.INVALID_DATA, statusCode: HTTP.BAD_REQUEST };
           }
           stock.quantity -= quantity;
         } else {
