@@ -4,6 +4,7 @@ import Stock from '../models/Inventory.model';
 import { dbService } from '../config/db';
 import { cacheService } from './redisCacheService';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES, HTTP, INPUT_OUTPUT } from '../config/constants';
+import productService from './productService';
 
 class InventoryService {
   async getAllStocks(): Promise<StockResponse> {
@@ -57,6 +58,13 @@ class InventoryService {
     return breaker.fire(async () => {
       const transaction = await dbService.transaction();
       try {
+        // Primero verificamos si el producto existe
+        const productResponse = await productService.getProductById(productId);
+        if (productResponse.statusCode === HTTP.NOT_FOUND) {
+          await transaction.rollback();
+          return { error: ERROR_MESSAGES.PRODUCT_NOT_FOUND, statusCode: HTTP.NOT_FOUND };
+        }
+
         const existingStock = await Stock.findOne({
           where: { productId, input_output: INPUT_OUTPUT.INPUT },
           transaction,
@@ -88,6 +96,13 @@ class InventoryService {
     return breaker.fire(async () => {
       const transaction = await dbService.transaction();
       try {
+        // Primero verificamos si el producto existe
+        const productResponse = await productService.getProductById(productId);
+        if (productResponse.statusCode === HTTP.NOT_FOUND) {
+          await transaction.rollback();
+          return { error: ERROR_MESSAGES.PRODUCT_NOT_FOUND, statusCode: HTTP.NOT_FOUND };
+        }
+
         const stock = await Stock.findOne({
           where: { productId, input_output: INPUT_OUTPUT.INPUT },
           transaction,
@@ -103,7 +118,7 @@ class InventoryService {
         } else if (input_output === INPUT_OUTPUT.OUTPUT) {
           if (stock.quantity < quantity) {
             await transaction.rollback();
-            return { error: ERROR_MESSAGES.INVALID_DATA, statusCode: HTTP.BAD_REQUEST };
+            return { error: ERROR_MESSAGES.INSUFFICIENT_STOCK, statusCode: HTTP.BAD_REQUEST };
           }
           stock.quantity -= quantity;
         } else {
