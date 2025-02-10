@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 1234
-      POSTGRES_DB: ms-inventory
+      POSTGRES_DB: postgres  # Changed to default postgres database
     ports:
       - "7432:5432"
     volumes:
@@ -18,6 +18,19 @@ services:
       test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 5s
       retries: 5
+
+  db-init:
+    image: postgres:15
+    container_name: ms-inventory_db-init
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      psql -U postgres -h postgres -c "CREATE DATABASE \"ms-inventory\";"
+    environment:
+      PGPASSWORD: 1234
+    networks:
+      - microservicios-red
 
   redis:
     image: redis:7
@@ -54,6 +67,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
     volumes:
