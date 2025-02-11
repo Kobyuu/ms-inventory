@@ -4,7 +4,7 @@ import Stock from '../models/Inventory.model';
 import { dbService } from '../config/db';
 import { cacheService } from './redisCacheService';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES, HTTP, INPUT_OUTPUT } from '../config/constants';
-import productService from './productService';
+import { productService } from './productService';
 
 class InventoryService {
   async getAllStocks(): Promise<StockResponse> {
@@ -55,13 +55,12 @@ class InventoryService {
   }
 
   async addStock(productId: number, quantity: number, input_output: number): Promise<StockResponse> {
-    return breaker.fire(async () => {
-      const transaction = await dbService.transaction();
-      try {
+    const transaction = await dbService.transaction();
+    try {
+      const result = await breaker.fire(async () => {
         // Primero verificamos si el producto existe
-        const productResponse = await productService.getProductById(productId);
+        const productResponse = await productService.getProductById(productId); // No more static call
         if (productResponse.statusCode === HTTP.NOT_FOUND) {
-          await transaction.rollback();
           return { error: ERROR_MESSAGES.PRODUCT_NOT_FOUND, statusCode: HTTP.NOT_FOUND };
         }
 
@@ -81,26 +80,36 @@ class InventoryService {
           );
         }
 
-        await transaction.commit();
-        await cacheService.clearCache([`stock:${productId}`, 'allStocks']);
         return { data: updatedStock, message: SUCCESS_MESSAGES.STOCK_ADDED };
-      } catch (error) {
+      });
+
+      if (result.error) {
         await transaction.rollback();
-        console.error(ERROR_MESSAGES.ADD_STOCK, error);
-        return { error: ERROR_MESSAGES.ADD_STOCK, statusCode: HTTP.INTERNAL_SERVER_ERROR };
+        return result;
       }
-    });
+
+      await transaction.commit();
+      await cacheService.clearCache([`stock:${productId}`, 'allStocks']);
+      return result;
+    } catch (error) {
+      await transaction.rollback();
+      console.error(ERROR_MESSAGES.ADD_STOCK, error);
+      return { error: ERROR_MESSAGES.ADD_STOCK, statusCode: HTTP.INTERNAL_SERVER_ERROR };
+    }
   }
 
   async updateStock(productId: number, quantity: number, input_output: number): Promise<StockResponse> {
-    return breaker.fire(async () => {
-      const transaction = await dbService.transaction();
-      try {
-        // Primero verificamos si el producto existe
+    const transaction = await dbService.transaction();
+    try {
+      const result = await breaker.fire(async () => {
+        // Verify product exists first
         const productResponse = await productService.getProductById(productId);
         if (productResponse.statusCode === HTTP.NOT_FOUND) {
-          await transaction.rollback();
-          return { error: ERROR_MESSAGES.PRODUCT_NOT_FOUND, statusCode: HTTP.NOT_FOUND };
+          // Return directly instead of throwing error
+          return { 
+            error: ERROR_MESSAGES.PRODUCT_NOT_FOUND, 
+            statusCode: HTTP.NOT_FOUND 
+          };
         }
 
         const stock = await Stock.findOne({
@@ -109,8 +118,10 @@ class InventoryService {
         });
 
         if (!stock) {
-          await transaction.rollback();
-          return { error: ERROR_MESSAGES.STOCK_NOT_FOUND, statusCode: HTTP.NOT_FOUND };
+          return { 
+            error: ERROR_MESSAGES.STOCK_NOT_FOUND, 
+            statusCode: HTTP.NOT_FOUND 
+          };
         }
 
         if (input_output === INPUT_OUTPUT.INPUT) {
@@ -127,15 +138,25 @@ class InventoryService {
         }
 
         const updatedStock = await stock.save({ transaction });
-        await transaction.commit();
-        await cacheService.clearCache([`stock:${productId}`, 'allStocks']);
         return { data: updatedStock, message: SUCCESS_MESSAGES.STOCK_UPDATED };
-      } catch (error) {
+      });
+
+      if (result.error) {
         await transaction.rollback();
-        console.error(ERROR_MESSAGES.UPDATE_STOCK, error);
-        return { error: ERROR_MESSAGES.UPDATE_STOCK, statusCode: HTTP.INTERNAL_SERVER_ERROR };
+        return result;
       }
-    });
+
+      await transaction.commit();
+      await cacheService.clearCache([`stock:${productId}`, 'allStocks']);
+      return result;
+    } catch (error) {
+      await transaction.rollback();
+      console.error(ERROR_MESSAGES.UPDATE_STOCK, error);
+      return { 
+        error: ERROR_MESSAGES.UPDATE_STOCK, 
+        statusCode: HTTP.INTERNAL_SERVER_ERROR 
+      };
+    }
   }
 }
 

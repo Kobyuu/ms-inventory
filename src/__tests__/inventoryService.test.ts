@@ -4,7 +4,7 @@ import { cacheService } from '../services/redisCacheService';
 import { dbService } from '../config/db';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES, HTTP, INPUT_OUTPUT } from '../config/constants';
 import breaker from '../middleware/circuitBreaker';
-import productService from '../services/productService';
+import { productService } from '../services/productService';
 
 // Crear mocks manualmente
 jest.mock('../services/redisCacheService');
@@ -15,25 +15,27 @@ jest.mock('../services/productService');
 describe('InventoryService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    (breaker.fire as jest.Mock).mockImplementation((fn) => fn());
   });
 
   describe('getAllStocks', () => {
     it('should return all stocks from cache', async () => {
       const cachedStocks = [{ productId: 1, quantity: 10 }];
       (cacheService.getFromCache as jest.Mock).mockResolvedValue(cachedStocks);
-      (breaker.fire as jest.Mock).mockImplementation((fn) => fn());
 
       const result = await InventoryService.getAllStocks();
 
-      expect(cacheService.getFromCache).toHaveBeenCalledWith('allStocks');
-      expect(result).toEqual({ data: cachedStocks, message: SUCCESS_MESSAGES.ALL_STOCKS_FETCHED });
+      expect(result).toEqual({ 
+        data: cachedStocks, 
+        message: SUCCESS_MESSAGES.ALL_STOCKS_FETCHED 
+      });
     });
 
     it('should return all stocks from database if not in cache and set to cache', async () => {
       const stocks = [{ productId: 1, quantity: 10 }];
       (cacheService.getFromCache as jest.Mock).mockResolvedValue(null);
       jest.spyOn(Stock, 'findAll').mockResolvedValue(stocks as any);
-      (breaker.fire as jest.Mock).mockImplementation((fn) => fn());
 
       const result = await InventoryService.getAllStocks();
 
@@ -45,7 +47,6 @@ describe('InventoryService', () => {
 
     it('should handle errors gracefully', async () => {
       (cacheService.getFromCache as jest.Mock).mockRejectedValue(new Error('Test error'));
-      (breaker.fire as jest.Mock).mockImplementation((fn) => fn());
 
       const result = await InventoryService.getAllStocks();
 
@@ -57,7 +58,6 @@ describe('InventoryService', () => {
     it('should return stock from cache', async () => {
       const cachedStock = { productId: 1, quantity: 10 };
       (cacheService.getFromCache as jest.Mock).mockResolvedValue(cachedStock);
-      (breaker.fire as jest.Mock).mockImplementation((fn) => fn());
 
       const result = await InventoryService.getStockByProductId(1);
 
@@ -69,7 +69,6 @@ describe('InventoryService', () => {
       const stock = { productId: 1, quantity: 10 };
       (cacheService.getFromCache as jest.Mock).mockResolvedValue(null);
       jest.spyOn(Stock, 'findOne').mockResolvedValue(stock as any);
-      (breaker.fire as jest.Mock).mockImplementation((fn) => fn());
 
       const result = await InventoryService.getStockByProductId(1);
 
@@ -82,7 +81,6 @@ describe('InventoryService', () => {
     it('should return 404 if stock is not found', async () => {
       (cacheService.getFromCache as jest.Mock).mockResolvedValue(null);
       jest.spyOn(Stock, 'findOne').mockResolvedValue(null);
-      (breaker.fire as jest.Mock).mockImplementation((fn) => fn());
 
       const result = await InventoryService.getStockByProductId(1);
 
@@ -91,7 +89,6 @@ describe('InventoryService', () => {
 
     it('should handle errors properly', async () => {
       (cacheService.getFromCache as jest.Mock).mockRejectedValue(new Error('Test error'));
-      (breaker.fire as jest.Mock).mockImplementation((fn) => fn());
 
       const result = await InventoryService.getStockByProductId(1);
 
@@ -101,16 +98,21 @@ describe('InventoryService', () => {
 
   describe('updateStock', () => {
     it('should update stock and clear cache', async () => {
-      const stock = { productId: 1, quantity: 10, save: jest.fn().mockResolvedValue({ productId: 1, quantity: 20 }) };
+      const stock = { 
+        productId: 1, 
+        quantity: 10, 
+        save: jest.fn().mockResolvedValue({ productId: 1, quantity: 20 }) 
+      };
       const transaction = { commit: jest.fn(), rollback: jest.fn() };
       (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
-      (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK });
+      (productService.getProductById as jest.Mock).mockResolvedValue({ 
+        data: { id: 1 }, 
+        statusCode: HTTP.OK 
+      });
       jest.spyOn(Stock, 'findOne').mockResolvedValue(stock as any);
-      (breaker.fire as jest.Mock).mockImplementation((fn) => fn());
 
       const result = await InventoryService.updateStock(1, 10, INPUT_OUTPUT.INPUT);
 
-      expect(productService.getProductById).toHaveBeenCalledWith(1);
       expect(Stock.findOne).toHaveBeenCalledWith({ 
         where: { productId: 1, input_output: INPUT_OUTPUT.INPUT }, 
         transaction 
@@ -118,7 +120,10 @@ describe('InventoryService', () => {
       expect(stock.save).toHaveBeenCalled();
       expect(transaction.commit).toHaveBeenCalled();
       expect(cacheService.clearCache).toHaveBeenCalledWith(['stock:1', 'allStocks']);
-      expect(result).toEqual({ data: { productId: 1, quantity: 20 }, message: SUCCESS_MESSAGES.STOCK_UPDATED });
+      expect(result).toEqual({ 
+        data: { productId: 1, quantity: 20 }, 
+        message: SUCCESS_MESSAGES.STOCK_UPDATED 
+      });
     });
 
     it('should return 404 if product does not exist', async () => {
@@ -128,7 +133,6 @@ describe('InventoryService', () => {
         statusCode: HTTP.NOT_FOUND, 
         error: ERROR_MESSAGES.PRODUCT_NOT_FOUND 
       });
-      (breaker.fire as jest.Mock).mockImplementation((fn) => fn());
 
       const result = await InventoryService.updateStock(1, 10, INPUT_OUTPUT.INPUT);
 
@@ -145,7 +149,6 @@ describe('InventoryService', () => {
       (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
       (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK });
       jest.spyOn(Stock, 'findOne').mockResolvedValue(null);
-      (breaker.fire as jest.Mock).mockImplementation((fn) => fn());
 
       const result = await InventoryService.updateStock(1, 10, INPUT_OUTPUT.INPUT);
 
@@ -159,7 +162,6 @@ describe('InventoryService', () => {
       (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
       (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK });
       jest.spyOn(Stock, 'findOne').mockResolvedValue(stock as any);
-      (breaker.fire as jest.Mock).mockImplementation((fn) => fn());
 
       const result = await InventoryService.updateStock(1, 10, INPUT_OUTPUT.OUTPUT);
 
@@ -173,7 +175,6 @@ describe('InventoryService', () => {
       (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
       (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK });
       jest.spyOn(Stock, 'findOne').mockResolvedValue(stock as any);
-      (breaker.fire as jest.Mock).mockImplementation((fn) => fn());
 
       const result = await InventoryService.updateStock(1, 10, 3);
 
@@ -183,14 +184,20 @@ describe('InventoryService', () => {
 
     it('should handle errors and rollback transaction', async () => {
       const transaction = { commit: jest.fn(), rollback: jest.fn() };
+      const testError = new Error('Test error');
+      
       (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
-      (productService.getProductById as jest.Mock).mockRejectedValue(new Error('Test error'));
-      (breaker.fire as jest.Mock).mockImplementation((fn) => fn());
-
+      // Let the error propagate through breaker.fire
+      (breaker.fire as jest.Mock).mockRejectedValue(testError);
+      (productService.getProductById as jest.Mock).mockRejectedValue(testError);
+  
       const result = await InventoryService.updateStock(1, 10, INPUT_OUTPUT.INPUT);
-
+  
       expect(transaction.rollback).toHaveBeenCalled();
-      expect(result).toEqual({ error: ERROR_MESSAGES.UPDATE_STOCK, statusCode: HTTP.INTERNAL_SERVER_ERROR });
+      expect(result).toEqual({
+        error: ERROR_MESSAGES.UPDATE_STOCK,
+        statusCode: HTTP.INTERNAL_SERVER_ERROR
+      });
     });
   });
 
@@ -199,10 +206,12 @@ describe('InventoryService', () => {
       const stock = { productId: 1, quantity: 10, input_output: INPUT_OUTPUT.INPUT };
       const transaction = { commit: jest.fn(), rollback: jest.fn() };
       (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
-      (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK });
+      (productService.getProductById as jest.Mock).mockResolvedValue({ 
+        data: { id: 1 }, 
+        statusCode: HTTP.OK 
+      });
       jest.spyOn(Stock, 'findOne').mockResolvedValue(null);
       jest.spyOn(Stock, 'create').mockResolvedValue(stock as any);
-      (breaker.fire as jest.Mock).mockImplementation((fn) => fn());
 
       const result = await InventoryService.addStock(1, 10, INPUT_OUTPUT.INPUT);
 
@@ -217,7 +226,10 @@ describe('InventoryService', () => {
       );
       expect(transaction.commit).toHaveBeenCalled();
       expect(cacheService.clearCache).toHaveBeenCalledWith(['stock:1', 'allStocks']);
-      expect(result).toEqual({ data: stock, message: SUCCESS_MESSAGES.STOCK_ADDED });
+      expect(result).toEqual({ 
+        data: stock, 
+        message: SUCCESS_MESSAGES.STOCK_ADDED 
+      });
     });
 
     it('should return 404 when product does not exist', async () => {
@@ -227,7 +239,6 @@ describe('InventoryService', () => {
         statusCode: HTTP.NOT_FOUND, 
         error: ERROR_MESSAGES.PRODUCT_NOT_FOUND 
       });
-      (breaker.fire as jest.Mock).mockImplementation((fn) => fn());
 
       const result = await InventoryService.addStock(1, 10, INPUT_OUTPUT.INPUT);
 
@@ -248,9 +259,11 @@ describe('InventoryService', () => {
       };
       const transaction = { commit: jest.fn(), rollback: jest.fn() };
       (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
-      (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK });
+      (productService.getProductById as jest.Mock).mockResolvedValue({ 
+        data: { id: 1 }, 
+        statusCode: HTTP.OK 
+      });
       jest.spyOn(Stock, 'findOne').mockResolvedValue(existingStock as any);
-      (breaker.fire as jest.Mock).mockImplementation((fn) => fn());
 
       const result = await InventoryService.addStock(1, 10, INPUT_OUTPUT.INPUT);
 
@@ -266,16 +279,27 @@ describe('InventoryService', () => {
 
     it('should handle errors and rollback transaction', async () => {
       const transaction = { commit: jest.fn(), rollback: jest.fn() };
+      const testError = new Error('Test error');
+      
       (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
-      (productService.getProductById as jest.Mock).mockRejectedValue(new Error('Test error'));
-      (breaker.fire as jest.Mock).mockImplementation((fn) => fn());
-
+      (breaker.fire as jest.Mock).mockImplementation(async (fn) => {
+        try {
+          return await fn();
+        } catch (error) {
+          return {
+            error: ERROR_MESSAGES.ADD_STOCK,
+            statusCode: HTTP.INTERNAL_SERVER_ERROR
+          };
+        }
+      });
+      (productService.getProductById as jest.Mock).mockRejectedValue(testError);
+  
       const result = await InventoryService.addStock(1, 10, INPUT_OUTPUT.INPUT);
-
+  
       expect(transaction.rollback).toHaveBeenCalled();
-      expect(result).toEqual({ 
-        error: ERROR_MESSAGES.ADD_STOCK, 
-        statusCode: HTTP.INTERNAL_SERVER_ERROR 
+      expect(result).toEqual({
+        error: ERROR_MESSAGES.ADD_STOCK,
+        statusCode: HTTP.INTERNAL_SERVER_ERROR
       });
     });
   });

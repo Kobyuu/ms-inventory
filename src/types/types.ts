@@ -1,4 +1,4 @@
-// Stock related interfaces
+// Stock interfaces
 export interface StockAttributes {
   productId: number;
   quantity: number;
@@ -6,6 +6,8 @@ export interface StockAttributes {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export type StockResponse = ApiResponse<StockAttributes | StockAttributes[]>;
 
 // Response interfaces
 export interface ApiResponse<T> {
@@ -15,7 +17,21 @@ export interface ApiResponse<T> {
   statusCode?: number;
 }
 
-export type StockResponse = ApiResponse<StockAttributes | StockAttributes[]>;
+// Product interfaces
+export interface IProduct {
+  id: number;
+  name: string;
+  price: number;
+  description?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface IProductResponse {
+  data: IProduct;
+  message?: string;
+  statusCode: number;
+}
 
 // Service interfaces
 export interface CacheService {
