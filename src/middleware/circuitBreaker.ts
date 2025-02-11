@@ -2,7 +2,7 @@ import CircuitBreaker from 'opossum';
 import { ERROR_MESSAGES, CIRCUIT_BREAKER_MESSAGES } from '../config/constants';
 
 const options = {
-  timeout: 3000, // Si la operación tarda más de 3 segundos, se considera un fallo
+  timeout: 10000, // Si la operación tarda más de 10 segundos, se considera un fallo
   errorThresholdPercentage: 50, // Si el 50% de las solicitudes fallan, el circuito se abre
   resetTimeout: 30000 // El circuito se cierra después de 30 segundos
 };

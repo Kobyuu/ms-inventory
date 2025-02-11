@@ -56,15 +56,13 @@ class InventoryService {
 
   async addStock(productId: number, quantity: number, input_output: number): Promise<StockResponse> {
     return breakers.addStock.fire(async () => {
+      // Iniciamos la transacción
       const transaction = await dbService.transaction();
       try {
-        // Primero verificamos si el producto existe
-        const productResponse = await productService.getProductById(productId);
-        if (productResponse.statusCode === HTTP.NOT_FOUND) {
-          await transaction.rollback();
-          return { error: ERROR_MESSAGES.PRODUCT_NOT_FOUND, statusCode: HTTP.NOT_FOUND };
-        }
+        // NOTA: Se eliminó la verificación del producto porque ya se hizo en el controlador.
+        // Si deseas mantenerla, asegúrate de que no duplique la llamada al servicio de productos.
 
+        // Buscar stock existente para ese producto y que sea de entrada
         const existingStock = await Stock.findOne({
           where: { productId, input_output: INPUT_OUTPUT.INPUT },
           transaction,
@@ -72,47 +70,51 @@ class InventoryService {
 
         let updatedStock;
         if (existingStock) {
+          // Actualizamos la cantidad
           existingStock.quantity += quantity;
           updatedStock = await existingStock.save({ transaction });
         } else {
+          // Creamos un nuevo registro de stock
           updatedStock = await Stock.create(
             { productId, quantity, input_output },
             { transaction }
           );
         }
 
+        // Confirmamos la transacción
         await transaction.commit();
+        // Limpiamos las cachés correspondientes
         await cacheService.clearCache([`stock:${productId}`, 'allStocks']);
+
         return { data: updatedStock, message: SUCCESS_MESSAGES.STOCK_ADDED };
       } catch (error) {
+        // Si ocurre cualquier error, revertimos la transacción
         await transaction.rollback();
         console.error(ERROR_MESSAGES.ADD_STOCK, error);
-        return { error: ERROR_MESSAGES.ADD_STOCK, statusCode: HTTP.INTERNAL_SERVER_ERROR };
+        // Lanza el error para que el breaker lo capture y active el fallback (o bien propágalo al controlador)
+        throw error;
       }
     });
   }
 
   async updateStock(productId: number, quantity: number, input_output: number): Promise<StockResponse> {
     return breakers.updateStock.fire(async () => {
+      // Iniciamos la transacción
       const transaction = await dbService.transaction();
       try {
-        // Primero verificamos si el producto existe
-        const productResponse = await productService.getProductById(productId);
-        if (productResponse.statusCode === HTTP.NOT_FOUND) {
-          await transaction.rollback();
-          return { error: ERROR_MESSAGES.PRODUCT_NOT_FOUND, statusCode: HTTP.NOT_FOUND };
-        }
-
+        // NOTA: Se omite la verificación del producto, ya que el controlador se encargó de ello.
+        // Buscamos el registro de stock para el producto (asumiendo que el stock a modificar es el de entrada).
         const stock = await Stock.findOne({
           where: { productId, input_output: INPUT_OUTPUT.INPUT },
           transaction,
         });
-
+        
         if (!stock) {
           await transaction.rollback();
           return { error: ERROR_MESSAGES.STOCK_NOT_FOUND, statusCode: HTTP.NOT_FOUND };
         }
 
+        // Actualizamos la cantidad según el tipo de operación
         if (input_output === INPUT_OUTPUT.INPUT) {
           stock.quantity += quantity;
         } else if (input_output === INPUT_OUTPUT.OUTPUT) {
@@ -126,14 +128,17 @@ class InventoryService {
           return { error: ERROR_MESSAGES.INVALID_DATA, statusCode: HTTP.BAD_REQUEST };
         }
 
+        // Guardamos la actualización y confirmamos la transacción
         const updatedStock = await stock.save({ transaction });
         await transaction.commit();
+        // Limpiamos las cachés afectadas
         await cacheService.clearCache([`stock:${productId}`, 'allStocks']);
+
         return { data: updatedStock, message: SUCCESS_MESSAGES.STOCK_UPDATED };
       } catch (error) {
         await transaction.rollback();
         console.error(ERROR_MESSAGES.UPDATE_STOCK, error);
-        return { error: ERROR_MESSAGES.UPDATE_STOCK, statusCode: HTTP.INTERNAL_SERVER_ERROR };
+        throw error; // Lanza el error para que el circuit breaker active el fallback o se propague al controlador
       }
     });
   }
