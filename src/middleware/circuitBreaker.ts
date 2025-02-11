@@ -1,4 +1,3 @@
-// circuitBreaker.ts
 import CircuitBreaker from 'opossum';
 import { ERROR_MESSAGES, CIRCUIT_BREAKER_MESSAGES } from '../config/constants';
 
@@ -9,11 +8,14 @@ const options = {
 };
 
 class CustomCircuitBreaker {
-  private breaker: CircuitBreaker;
+  private breaker: CircuitBreaker<[() => Promise<any>], any>;
 
   constructor() {
-    // Inicializamos con una función dummy; esta acción se reemplazará en cada llamada a fire().
-    this.breaker = new CircuitBreaker(() => Promise.resolve(), options);
+    /**
+     * Creamos un breaker cuyo callback recibe la función de operación como argumento
+     * y la ejecuta.
+     */
+    this.breaker = new CircuitBreaker((operation: () => Promise<any>) => operation(), options);
 
     this.breaker.fallback(() => {
       throw new Error(ERROR_MESSAGES.SERVICE_UNAVAILABLE);
@@ -29,12 +31,11 @@ class CustomCircuitBreaker {
    * @param operation Función asíncrona que contiene la lógica de negocio.
    */
   async fire(operation: () => Promise<any>): Promise<any> {
-    // Reemplazamos dinámicamente la acción del breaker por la operación que queremos ejecutar.
     return this.breaker.fire(operation);
   }
 }
 
-// Instanciamos un breaker para cada operación que queramos cubrir.
+// Instanciamos un breaker para cada operación que queremos cubrir.
 export const breakers = {
   getAllStocks: new CustomCircuitBreaker(),
   getStockByProductId: new CustomCircuitBreaker(),
