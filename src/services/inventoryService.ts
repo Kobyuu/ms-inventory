@@ -1,4 +1,4 @@
-import breaker from '../middleware/circuitBreaker';
+import { breakers } from '../middleware/circuitBreaker';
 import { StockResponse } from '../types/types';
 import Stock from '../models/Inventory.model';
 import { dbService } from '../config/db';
@@ -8,7 +8,7 @@ import productService from './productService';
 
 class InventoryService {
   async getAllStocks(): Promise<StockResponse> {
-    return breaker.fire(async () => {
+    return breakers.getAllStocks.fire(async () => {
       const cacheKey = 'allStocks';
       try {
         // Intentar obtener los datos desde la caché
@@ -30,7 +30,7 @@ class InventoryService {
   }
 
   async getStockByProductId(productId: number): Promise<StockResponse> {
-    return breaker.fire(async () => {
+    return breakers.getStockByProductId.fire(async () => {
       const cacheKey = `stock:${productId}`;
       try {
         // Intentar obtener los datos desde la caché
@@ -55,7 +55,7 @@ class InventoryService {
   }
 
   async addStock(productId: number, quantity: number, input_output: number): Promise<StockResponse> {
-    return breaker.fire(async () => {
+    return breakers.addStock.fire(async () => {
       const transaction = await dbService.transaction();
       try {
         // Primero verificamos si el producto existe
@@ -93,7 +93,7 @@ class InventoryService {
   }
 
   async updateStock(productId: number, quantity: number, input_output: number): Promise<StockResponse> {
-    return breaker.fire(async () => {
+    return breakers.updateStock.fire(async () => {
       const transaction = await dbService.transaction();
       try {
         // Primero verificamos si el producto existe

@@ -1,6 +1,6 @@
+// circuitBreaker.ts
 import CircuitBreaker from 'opossum';
-import { Request, Response, NextFunction } from 'express';
-import { ERROR_MESSAGES, HTTP, CIRCUIT_BREAKER_MESSAGES } from '../config/constants';
+import { ERROR_MESSAGES, CIRCUIT_BREAKER_MESSAGES } from '../config/constants';
 
 const options = {
   timeout: 3000, // Si la operación tarda más de 3 segundos, se considera un fallo
@@ -8,28 +8,38 @@ const options = {
   resetTimeout: 30000 // El circuito se cierra después de 30 segundos
 };
 
-const breaker = new CircuitBreaker(async (func: Function, ...args: any[]) => {
-  return await func(...args);
-}, options);
+class CustomCircuitBreaker {
+  private breaker: CircuitBreaker;
 
-// Configuración del fallback para cuando el circuito está abierto
-breaker.fallback(() => {
-  return { error: ERROR_MESSAGES.SERVICE_UNAVAILABLE, statusCode: HTTP.SERVICE_UNAVAILABLE };
-});
+  constructor() {
+    // Inicializamos con una función dummy; esta acción se reemplazará en cada llamada a fire().
+    this.breaker = new CircuitBreaker(() => Promise.resolve(), options);
 
-// Eventos del CircuitBreaker para monitorear su estado
-breaker.on('open', () => console.log(CIRCUIT_BREAKER_MESSAGES.OPEN));
-breaker.on('halfOpen', () => console.log(CIRCUIT_BREAKER_MESSAGES.HALF_OPEN));
-breaker.on('close', () => console.log(CIRCUIT_BREAKER_MESSAGES.CLOSED));
+    this.breaker.fallback(() => {
+      throw new Error(ERROR_MESSAGES.SERVICE_UNAVAILABLE);
+    });
 
-export const withCircuitBreaker = (req: Request, res: Response, next: NextFunction) => {
-  if (breaker.opened) {
-    return res.status(HTTP.SERVICE_UNAVAILABLE).json({ message: ERROR_MESSAGES.SERVICE_UNAVAILABLE });
+    this.breaker.on('open', () => console.log(CIRCUIT_BREAKER_MESSAGES.OPEN));
+    this.breaker.on('halfOpen', () => console.log(CIRCUIT_BREAKER_MESSAGES.HALF_OPEN));
+    this.breaker.on('close', () => console.log(CIRCUIT_BREAKER_MESSAGES.CLOSED));
   }
 
-  breaker.fire(() => Promise.resolve())
-    .then(() => next())
-    .catch(() => res.status(HTTP.SERVICE_UNAVAILABLE).json({ message: ERROR_MESSAGES.SERVICE_UNAVAILABLE }));
+  /**
+   * Ejecuta la operación pasada dentro del contexto del circuit breaker.
+   * @param operation Función asíncrona que contiene la lógica de negocio.
+   */
+  async fire(operation: () => Promise<any>): Promise<any> {
+    // Reemplazamos dinámicamente la acción del breaker por la operación que queremos ejecutar.
+    return this.breaker.fire(operation);
+  }
+}
+
+// Instanciamos un breaker para cada operación que queramos cubrir.
+export const breakers = {
+  getAllStocks: new CustomCircuitBreaker(),
+  getStockByProductId: new CustomCircuitBreaker(),
+  addStock: new CustomCircuitBreaker(),
+  updateStock: new CustomCircuitBreaker(),
 };
 
-export default breaker;
+export default CustomCircuitBreaker;
