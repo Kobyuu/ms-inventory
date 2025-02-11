@@ -1,26 +1,29 @@
-# Usar una imagen base de Node.js
+# Use Node.js base image
 FROM node:18
 
-# Establecer el directorio de trabajo
+# Add curl for testing (using apt-get instead of apk)
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
 WORKDIR /app
 
-# Copiar el archivo package.json y package-lock.json
+# Copy package files
 COPY package*.json ./
 
-# Instalar las dependencias
+# Install dependencies
 RUN npm install
 
-# Copiar el resto del código de la aplicación
+# Copy application code
 COPY . .
 
-# Copiar el archivo .env
+# Copy env file
 COPY .env .env
 
-# Compilar TypeScript a JavaScript
+# Build TypeScript
 RUN npm run build
 
-# Exponer el puerto en el que la aplicación se ejecutará
+# Expose port
 EXPOSE 4002
 
-# Comando para ejecutar la aplicación
+# Run command
 CMD ["npm", "run", "dev"]
