@@ -18,6 +18,7 @@ services:
       test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 5s
       retries: 5
+    restart: unless-stopped
 
   db-init:
     image: postgres:15
@@ -26,11 +27,16 @@ services:
       postgres:
         condition: service_healthy
     command: >
-      psql -U postgres -h postgres -c "CREATE DATABASE \"ms-inventory\";"
+      bash -c '
+        sleep 10 &&
+        psql -U postgres -h postgres -tc "SELECT 1 FROM pg_database WHERE datname = '\''ms-inventory'\''" | grep -q 1 ||
+        psql -U postgres -h postgres -c "CREATE DATABASE ms-inventory;"
+      '
     environment:
       PGPASSWORD: 1234
     networks:
       - microservicios-red
+    restart: no
 
   redis:
     image: redis:7
@@ -73,7 +79,7 @@ services:
         condition: service_healthy
     volumes:
       - .:/app
-    command: npm run dev
+    command: sh -c "sleep 15 && npm run dev"
     networks:
       - microservicios-red
     healthcheck:
