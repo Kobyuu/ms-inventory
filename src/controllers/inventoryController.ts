@@ -55,7 +55,7 @@ class InventoryController {
   static async addStock(req: Request, res: Response): Promise<Response> {
     const { productId, quantity, input_output } = req.body;
     try {
-      const productError = await this.verifyProduct(productId);
+      const productError = await InventoryController.verifyProduct(productId);
       if (productError) {
         return res.status(productError.status).json(productError.json);
       }
@@ -76,15 +76,23 @@ class InventoryController {
   static async updateStock(req: Request, res: Response): Promise<Response> {
     const { productId, quantity, input_output } = req.body;
     try {
-      const productError = await this.verifyProduct(productId);
+      const productError = await InventoryController.verifyProduct(productId);
       if (productError) {
         return res.status(productError.status).json(productError.json);
       }
 
-      const updatedStock = await inventoryService.updateStock(productId, quantity, input_output);
+      const result = await inventoryService.updateStock(productId, quantity, input_output);
+      
+      if (result.error) {
+        return res.status(result.statusCode || HTTP.INTERNAL_SERVER_ERROR).json({
+          message: result.error
+        });
+      }
+
+      // Solo devolver los datos del stock y no el objeto result completo
       return res.status(HTTP.OK).json({
         message: SUCCESS_MESSAGES.STOCK_UPDATED,
-        updatedStock
+        updatedStock: result.data
       });
     } catch (e: any) {
       return res.status(HTTP.INTERNAL_SERVER_ERROR).json({
