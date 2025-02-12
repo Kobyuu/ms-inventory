@@ -20,24 +20,6 @@ services:
       retries: 5
     restart: unless-stopped
 
-  db-init:
-    image: postgres:15
-    container_name: ms-inventory_db-init
-    depends_on:
-      postgres:
-        condition: service_healthy
-    command: >
-      bash -c '
-        sleep 10 &&
-        psql -U postgres -h postgres -tc "SELECT 1 FROM pg_database WHERE datname = '\''ms-inventory'\''" | grep -q 1 ||
-        psql -U postgres -h postgres -c "CREATE DATABASE ms-inventory;"
-      '
-    environment:
-      PGPASSWORD: 1234
-    networks:
-      - microservicios-red
-    restart: no
-
   redis:
     image: redis:7
     container_name: ms-inventory_redis
@@ -73,8 +55,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      db-init:
-        condition: service_completed_successfully
       redis:
         condition: service_healthy
     volumes:
