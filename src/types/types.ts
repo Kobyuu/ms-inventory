@@ -3,6 +3,7 @@ export interface StockAttributes {
   productId: number;
   quantity: number;
   input_output: number;
+  transaction_date: Date;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -17,12 +18,20 @@ export interface ApiResponse<T> {
   statusCode?: number;
 }
 
+// Error Response interface
+export interface ErrorResponse {
+  status: number;
+  json: {
+    message: string;
+  };
+}
+
 // Product interfaces
 export interface IProduct {
   id: number;
   name: string;
   price: number;
-  description?: string;
+  active: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -30,6 +39,7 @@ export interface IProduct {
 export interface IProductResponse {
   data: IProduct;
   message?: string;
+  error?: string;
   statusCode: number;
 }
 

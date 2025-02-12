@@ -3,6 +3,7 @@ import Stock from '../models/Inventory.model';
 import { dbService } from '../config/db';
 import { cacheService } from './redisCacheService';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES, HTTP, INPUT_OUTPUT } from '../config/constants';
+import productService from './productService';
 
 class InventoryService {
   /**
@@ -59,6 +60,13 @@ class InventoryService {
   async addStock(productId: number, quantity: number, input_output: number): Promise<StockResponse> {
     const transaction = await dbService.transaction();
     try {
+      // Verificar si el producto existe
+      const productResponse = await productService.getProductById(productId);
+      if (productResponse.statusCode === HTTP.NOT_FOUND) {
+        await transaction.rollback();
+        return { error: ERROR_MESSAGES.PRODUCT_NOT_FOUND, statusCode: HTTP.NOT_FOUND };
+      }
+
       // Buscar registro de stock existente para el producto y de tipo INPUT
       const existingStock = await Stock.findOne({
         where: { productId, input_output: INPUT_OUTPUT.INPUT },
@@ -67,19 +75,21 @@ class InventoryService {
 
       let updatedStock;
       if (existingStock) {
-        // Actualiza la cantidad existente
         existingStock.quantity += quantity;
         updatedStock = await existingStock.save({ transaction });
       } else {
-        // Crea un nuevo registro de stock
         updatedStock = await Stock.create(
-          { productId, quantity, input_output },
+          { 
+            productId, 
+            quantity, 
+            input_output,
+            transaction_date: new Date() 
+          },
           { transaction }
         );
       }
 
       await transaction.commit();
-      // Limpiar caché correspondiente
       await cacheService.clearCache([`stock:${productId}`, 'allStocks']);
       return { data: updatedStock, message: SUCCESS_MESSAGES.STOCK_ADDED };
     } catch (error) {
@@ -96,6 +106,13 @@ class InventoryService {
   async updateStock(productId: number, quantity: number, input_output: number): Promise<StockResponse> {
     const transaction = await dbService.transaction();
     try {
+      // Verificar si el producto existe
+      const productResponse = await productService.getProductById(productId);
+      if (productResponse.statusCode === HTTP.NOT_FOUND) {
+        await transaction.rollback();
+        return { error: ERROR_MESSAGES.PRODUCT_NOT_FOUND, statusCode: HTTP.NOT_FOUND };
+      }
+
       // Buscar el registro de stock para el producto y de tipo INPUT
       const stock = await Stock.findOne({
         where: { productId, input_output: INPUT_OUTPUT.INPUT },

@@ -78,13 +78,13 @@ jest.setTimeout(30000)
 
 ## Características
 
-- **Circuit Breaker**: Manejo de fallos en servicios externos usando [`CircuitBreaker`](src/middleware/circuitBreaker.ts)
-- **Redis Caching**: Optimización de rendimiento con [`RedisCacheService`](src/utils/utils.ts)
-- **Input Validation**: Validaciones robustas con [`validateInventory`](src/middleware/validateInventory.ts)
-- **Rate Limiting**: Protección contra sobrecarga con [`rateLimiter`](src/middleware/rateLimiter.ts)
+- **Redis Caching**: Optimización de rendimiento con RedisCacheService
+- **Input Validation**: Validaciones robustas con validateInventory
+- **Rate Limiting**: Protección contra sobrecarga con rateLimiter 
 - **Database Transactions**: Operaciones ACID usando Sequelize
 - **Automated Tests**: Cobertura completa con Jest
 - **TypeScript**: Código completamente tipado
+- **Circuit Breaker**: Manejo de fallos en servicios externos usando CircuitBreaker
 
 ## Uso
 

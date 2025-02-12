@@ -27,7 +27,12 @@ describe('InventoryController', () => {
 
   describe('getAllStocks', () => {
     it('should return all stocks', async () => {
-      const stocks = [{ productId: 1, quantity: 10 }];
+      const stocks = [{
+        productId: 1,
+        quantity: 10,
+        input_output: INPUT_OUTPUT.INPUT,
+        transaction_date: new Date()
+      }];
       (inventoryService.getAllStocks as jest.Mock).mockResolvedValue(stocks);
 
       await InventoryController.getAllStocks(req as Request, res as Response);
@@ -93,7 +98,18 @@ describe('InventoryController', () => {
 
   describe('addStock', () => {
     it('should add stock successfully', async () => {
-      const stock = { productId: 1, quantity: 10 };
+      const product = {
+        id: 1,
+        name: 'Test Product',
+        price: 100,
+        active: true
+      };
+      const stock = {
+        productId: 1,
+        quantity: 10,
+        input_output: INPUT_OUTPUT.INPUT,
+        transaction_date: new Date()
+      };
       req.body = { productId: 1, quantity: 10, input_output: INPUT_OUTPUT.INPUT };
       (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK });
       (inventoryService.addStock as jest.Mock).mockResolvedValue(stock);

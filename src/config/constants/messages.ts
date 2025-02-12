@@ -14,10 +14,8 @@ export const ERROR_MESSAGES = {
     DB_URL_NOT_DEFINED: 'DATABASE_URL no está definida en el archivo .env',
     ENV_VAR_NOT_DEFINED: 'La variable de entorno no está definida',
     REDIS_CONNECTION: 'Error en Redis',
-    INSUFFICIENT_REDUCTION_RECORDS: 'No hay suficientes registros de reducción para revertir esta cantidad',
     RATE_LIMIT_EXCEEDED: 'Demasiadas solicitudes desde esta IP, por favor intente de nuevo más tarde.',
-    SERVICE_UNAVAILABLE: 'Servicio no disponible, por favor intente de nuevo más tarde.',
-    FETCH_ALL_STOCKS: 'Error al obtener todos los datos del inventario' 
+    FETCH_ALL_STOCKS: 'Error al obtener todos los datos del inventario',
 };
 
 export const SUCCESS_MESSAGES = {
@@ -27,12 +25,6 @@ export const SUCCESS_MESSAGES = {
     REDIS_CONNECTION: 'Conectado a Redis',
     STOCK_FETCHED: 'Stock obtenido exitosamente',
     ALL_STOCKS_FETCHED: 'Todos los stocks obtenidos exitosamente',
-};
-
-export const CIRCUIT_BREAKER_MESSAGES = {
-    OPEN: 'Circuito abierto',
-    HALF_OPEN: 'Circuito medio abierto',
-    CLOSED: 'Circuito cerrado'
 };
 
 export const DYNAMIC_MESSAGES = {
