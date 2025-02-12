@@ -1,6 +1,7 @@
 // Stock interfaces
 export interface StockAttributes {
-  productId: number;
+  id?: number; 
+  productId: number; 
   quantity: number;
   input_output: number;
   transaction_date: Date;
@@ -28,7 +29,7 @@ export interface ErrorResponse {
 
 // Product interfaces
 export interface IProduct {
-  id: number;
+  productId: number; 
   name: string;
   price: number;
   active: boolean;
