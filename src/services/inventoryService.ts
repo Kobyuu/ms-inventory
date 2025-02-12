@@ -57,7 +57,11 @@ class InventoryService {
    * Agrega stock para un producto.
    * Se asume que el controlador ya verificó que el producto existe.
    */
-  async addStock(productId: number, quantity: number, input_output: number): Promise<StockResponse> {
+  async addStock(
+    productId: number, 
+    quantity: number, 
+    input_output: number = INPUT_OUTPUT.INPUT
+  ): Promise<StockResponse> {
     const transaction = await dbService.transaction();
     try {
       // Verificar si el producto existe
@@ -67,9 +71,15 @@ class InventoryService {
         return { error: ERROR_MESSAGES.PRODUCT_NOT_FOUND, statusCode: HTTP.NOT_FOUND };
       }
 
-      // Buscar registro de stock existente para el producto y de tipo INPUT
+      // Validar que solo se permitan entradas (INPUT)
+      if (input_output !== INPUT_OUTPUT.INPUT) {
+        await transaction.rollback();
+        return { error: ERROR_MESSAGES.INVALID_DATA, statusCode: HTTP.BAD_REQUEST };
+      }
+
+      // Buscar registro de stock existente para el producto
       const existingStock = await Stock.findOne({
-        where: { productId, input_output: INPUT_OUTPUT.INPUT },
+        where: { productId },
         transaction,
       });
 
@@ -82,7 +92,7 @@ class InventoryService {
           { 
             productId, 
             quantity, 
-            input_output,
+            input_output: INPUT_OUTPUT.INPUT, // Forzar siempre como entrada
             transaction_date: new Date() 
           },
           { transaction }

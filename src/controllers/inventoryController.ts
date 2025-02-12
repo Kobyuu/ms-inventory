@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { HTTP, ERROR_MESSAGES, SUCCESS_MESSAGES } from '../config/constants';
+import { HTTP, ERROR_MESSAGES, SUCCESS_MESSAGES, INPUT_OUTPUT } from '../config/constants';
 import { ErrorResponse } from '../types/types';
 import inventoryService from '../services/inventoryService';
 import productService from '../services/productService';
@@ -53,14 +53,14 @@ class InventoryController {
   }
 
   static async addStock(req: Request, res: Response): Promise<Response> {
-    const { productId, quantity, input_output } = req.body;
+    const { productId, quantity } = req.body;
     try {
       const productError = await InventoryController.verifyProduct(productId);
       if (productError) {
         return res.status(productError.status).json(productError.json);
       }
 
-      const result = await inventoryService.addStock(productId, quantity, input_output);
+      const result = await inventoryService.addStock(productId, quantity, INPUT_OUTPUT.INPUT);
       
       if (result.error || !result.data) {
         return res.status(result.statusCode || HTTP.INTERNAL_SERVER_ERROR).json({

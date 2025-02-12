@@ -110,7 +110,7 @@ describe('InventoryController', () => {
         },
         message: SUCCESS_MESSAGES.STOCK_ADDED
       };
-      req.body = { productId: 1, quantity: 10, input_output: INPUT_OUTPUT.INPUT };
+      req.body = { productId: 1, quantity: 10 };
       (productService.getProductById as jest.Mock).mockResolvedValue({ 
         data: { id: 1, name: 'Test Product', price: 100, active: true },
         statusCode: HTTP.OK 
@@ -120,7 +120,7 @@ describe('InventoryController', () => {
       await InventoryController.addStock(req as Request, res as Response);
 
       expect(productService.getProductById).toHaveBeenCalledWith(1);
-      expect(inventoryService.addStock).toHaveBeenCalledWith(1, 10, INPUT_OUTPUT.INPUT);
+      expect(inventoryService.addStock).toHaveBeenCalledWith(1, 10, INPUT_OUTPUT.INPUT); // Actualizar expectativa
       expect(res.status).toHaveBeenCalledWith(HTTP.CREATED);
       expect(res.json).toHaveBeenCalledWith({
         message: SUCCESS_MESSAGES.STOCK_ADDED,
@@ -129,7 +129,7 @@ describe('InventoryController', () => {
     });
 
     it('should return 404 if product not found', async () => {
-      req.body = { productId: 1, quantity: 10, input_output: INPUT_OUTPUT.INPUT };
+      req.body = { productId: 1, quantity: 10 }; // Remove input_output
       (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.NOT_FOUND });
 
       await InventoryController.addStock(req as Request, res as Response);
@@ -141,7 +141,7 @@ describe('InventoryController', () => {
 
     it('should handle errors', async () => {
       const error = new Error('Test error');
-      req.body = { productId: 1, quantity: 10, input_output: INPUT_OUTPUT.INPUT };
+      req.body = { productId: 1, quantity: 10 }; // Remove input_output
       (productService.getProductById as jest.Mock).mockRejectedValue(error);
 
       await InventoryController.addStock(req as Request, res as Response);

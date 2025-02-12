@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { commonValidations, stockValidations, productIdValidation } from './middleware/validationRouter';
+import { commonValidations, stockValidations, addStockValidations, productIdValidation } from './middleware/validationRouter';
 import InventoryController from './controllers/inventoryController';
 
 const router = Router();
@@ -14,7 +14,7 @@ router.get('/:productId',
 );
 
 router.post('/',
-  stockValidations,
+  addStockValidations, // Usar validaciones específicas para addStock
   commonValidations,
   InventoryController.addStock
 );
