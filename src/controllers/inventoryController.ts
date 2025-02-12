@@ -60,10 +60,17 @@ class InventoryController {
         return res.status(productError.status).json(productError.json);
       }
 
-      const addedStock = await inventoryService.addStock(productId, quantity, input_output);
+      const result = await inventoryService.addStock(productId, quantity, input_output);
+      
+      if (result.error || !result.data) {
+        return res.status(result.statusCode || HTTP.INTERNAL_SERVER_ERROR).json({
+          message: result.error || ERROR_MESSAGES.ADD_STOCK
+        });
+      }
+
       return res.status(HTTP.CREATED).json({
         message: SUCCESS_MESSAGES.STOCK_ADDED,
-        updatedStock: addedStock
+        updatedStock: result.data
       });
     } catch (e: any) {
       return res.status(HTTP.INTERNAL_SERVER_ERROR).json({
@@ -83,13 +90,12 @@ class InventoryController {
 
       const result = await inventoryService.updateStock(productId, quantity, input_output);
       
-      if (result.error) {
+      if (result.error || !result.data) {
         return res.status(result.statusCode || HTTP.INTERNAL_SERVER_ERROR).json({
-          message: result.error
+          message: result.error || ERROR_MESSAGES.UPDATE_STOCK
         });
       }
 
-      // Solo devolver los datos del stock y no el objeto result completo
       return res.status(HTTP.OK).json({
         message: SUCCESS_MESSAGES.STOCK_UPDATED,
         updatedStock: result.data

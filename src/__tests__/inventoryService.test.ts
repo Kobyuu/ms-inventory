@@ -70,7 +70,12 @@ describe('InventoryService', () => {
     });
 
     it('should return stock from database if not in cache and set to cache', async () => {
-      const stock = { productId: 1, quantity: 10 };
+      const stock = { 
+        productId: 1, 
+        quantity: 10,
+        input_output: INPUT_OUTPUT.INPUT,
+        transaction_date: new Date()
+      };
       (cacheService.getFromCache as jest.Mock).mockResolvedValue(null);
       jest.spyOn(Stock, 'findOne').mockResolvedValue(stock as any);
 
@@ -102,7 +107,21 @@ describe('InventoryService', () => {
 
   describe('updateStock', () => {
     it('should update stock and clear cache', async () => {
-      const stock = { productId: 1, quantity: 10, save: jest.fn().mockResolvedValue({ productId: 1, quantity: 20 }) };
+      const mockDate = new Date('2025-02-12T04:34:43.669Z'); // Use fixed date
+      jest.spyOn(global, 'Date').mockImplementation(() => mockDate);
+
+      const stock = { 
+        productId: 1, 
+        quantity: 10,
+        input_output: INPUT_OUTPUT.INPUT,
+        transaction_date: mockDate,
+        save: jest.fn().mockResolvedValue({ 
+          productId: 1, 
+          quantity: 20,
+          input_output: INPUT_OUTPUT.INPUT,
+          transaction_date: mockDate
+        }) 
+      };
       const transaction = { commit: jest.fn(), rollback: jest.fn() };
       (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
       (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK });
@@ -113,12 +132,24 @@ describe('InventoryService', () => {
       expect(productService.getProductById).toHaveBeenCalledWith(1);
       expect(Stock.findOne).toHaveBeenCalledWith({ 
         where: { productId: 1, input_output: INPUT_OUTPUT.INPUT }, 
-        transaction 
+        transaction,
+        lock: true
       });
       expect(stock.save).toHaveBeenCalled();
       expect(transaction.commit).toHaveBeenCalled();
       expect(cacheService.clearCache).toHaveBeenCalledWith(['stock:1', 'allStocks']);
-      expect(result).toEqual({ data: { productId: 1, quantity: 20 }, message: SUCCESS_MESSAGES.STOCK_UPDATED });
+      expect(result).toEqual({ 
+        data: { 
+          productId: 1, 
+          quantity: 20, 
+          input_output: INPUT_OUTPUT.INPUT,
+          transaction_date: mockDate 
+        }, 
+        message: SUCCESS_MESSAGES.STOCK_UPDATED 
+      });
+
+      // Restore Date mock
+      jest.spyOn(global, 'Date').mockRestore();
     });
 
     it('should return 404 if product does not exist', async () => {
@@ -250,11 +281,20 @@ describe('InventoryService', () => {
     });
 
     it('should update existing stock quantity', async () => {
+      const mockDate = new Date('2025-02-12T04:32:51.157Z'); // Use a fixed date
+      jest.spyOn(global, 'Date').mockImplementation(() => mockDate);
+
       const existingStock = { 
         productId: 1, 
         quantity: 10, 
         input_output: INPUT_OUTPUT.INPUT,
-        save: jest.fn().mockResolvedValue({ productId: 1, quantity: 20, input_output: INPUT_OUTPUT.INPUT })
+        transaction_date: new Date(),
+        save: jest.fn().mockResolvedValue({ 
+          productId: 1, 
+          quantity: 20, 
+          input_output: INPUT_OUTPUT.INPUT,
+          transaction_date: new Date()
+        })
       };
       const transaction = { commit: jest.fn(), rollback: jest.fn() };
       (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
@@ -268,9 +308,17 @@ describe('InventoryService', () => {
       expect(transaction.commit).toHaveBeenCalled();
       expect(cacheService.clearCache).toHaveBeenCalledWith(['stock:1', 'allStocks']);
       expect(result).toEqual({ 
-        data: { productId: 1, quantity: 20, input_output: INPUT_OUTPUT.INPUT }, 
+        data: { 
+          productId: 1, 
+          quantity: 20, 
+          input_output: INPUT_OUTPUT.INPUT,
+          transaction_date: mockDate 
+        }, 
         message: SUCCESS_MESSAGES.STOCK_ADDED 
       });
+
+      // Don't forget to restore the Date mock
+      jest.spyOn(global, 'Date').mockRestore();
     });
 
     it('should handle errors and rollback transaction', async () => {

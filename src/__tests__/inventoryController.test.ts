@@ -27,12 +27,15 @@ describe('InventoryController', () => {
 
   describe('getAllStocks', () => {
     it('should return all stocks', async () => {
-      const stocks = [{
-        productId: 1,
-        quantity: 10,
-        input_output: INPUT_OUTPUT.INPUT,
-        transaction_date: new Date()
-      }];
+      const stocks = {
+        data: [{
+          productId: 1,
+          quantity: 10,
+          input_output: INPUT_OUTPUT.INPUT,
+          transaction_date: new Date()
+        }],
+        message: SUCCESS_MESSAGES.ALL_STOCKS_FETCHED
+      };
       (inventoryService.getAllStocks as jest.Mock).mockResolvedValue(stocks);
 
       await InventoryController.getAllStocks(req as Request, res as Response);
@@ -98,20 +101,20 @@ describe('InventoryController', () => {
 
   describe('addStock', () => {
     it('should add stock successfully', async () => {
-      const product = {
-        id: 1,
-        name: 'Test Product',
-        price: 100,
-        active: true
-      };
       const stock = {
-        productId: 1,
-        quantity: 10,
-        input_output: INPUT_OUTPUT.INPUT,
-        transaction_date: new Date()
+        data: {
+          productId: 1,
+          quantity: 10,
+          input_output: INPUT_OUTPUT.INPUT,
+          transaction_date: new Date()
+        },
+        message: SUCCESS_MESSAGES.STOCK_ADDED
       };
       req.body = { productId: 1, quantity: 10, input_output: INPUT_OUTPUT.INPUT };
-      (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK });
+      (productService.getProductById as jest.Mock).mockResolvedValue({ 
+        data: { id: 1, name: 'Test Product', price: 100, active: true },
+        statusCode: HTTP.OK 
+      });
       (inventoryService.addStock as jest.Mock).mockResolvedValue(stock);
 
       await InventoryController.addStock(req as Request, res as Response);
@@ -121,7 +124,7 @@ describe('InventoryController', () => {
       expect(res.status).toHaveBeenCalledWith(HTTP.CREATED);
       expect(res.json).toHaveBeenCalledWith({
         message: SUCCESS_MESSAGES.STOCK_ADDED,
-        updatedStock: stock
+        updatedStock: stock.data
       });
     });
 
@@ -154,9 +157,20 @@ describe('InventoryController', () => {
 
   describe('updateStock', () => {
     it('should update stock successfully', async () => {
-      const stock = { productId: 1, quantity: 10 };
+      const stock = {
+        data: {
+          productId: 1,
+          quantity: 10,
+          input_output: INPUT_OUTPUT.INPUT,
+          transaction_date: new Date()
+        },
+        message: SUCCESS_MESSAGES.STOCK_UPDATED
+      };
       req.body = { productId: 1, quantity: 10, input_output: INPUT_OUTPUT.OUTPUT };
-      (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK });
+      (productService.getProductById as jest.Mock).mockResolvedValue({ 
+        data: { id: 1, name: 'Test Product', price: 100, active: true },
+        statusCode: HTTP.OK 
+      });
       (inventoryService.updateStock as jest.Mock).mockResolvedValue(stock);
 
       await InventoryController.updateStock(req as Request, res as Response);
@@ -166,7 +180,7 @@ describe('InventoryController', () => {
       expect(res.status).toHaveBeenCalledWith(HTTP.OK);
       expect(res.json).toHaveBeenCalledWith({
         message: SUCCESS_MESSAGES.STOCK_UPDATED,
-        updatedStock: stock
+        updatedStock: stock.data
       });
     });
 

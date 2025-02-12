@@ -113,10 +113,11 @@ class InventoryService {
         return { error: ERROR_MESSAGES.PRODUCT_NOT_FOUND, statusCode: HTTP.NOT_FOUND };
       }
 
-      // Buscar el registro de stock para el producto y de tipo INPUT
+      // Buscar el registro con FOR UPDATE para evitar condiciones de carrera
       const stock = await Stock.findOne({
         where: { productId, input_output: INPUT_OUTPUT.INPUT },
         transaction,
+        lock: true  // Añadir bloqueo
       });
 
       if (!stock) {
@@ -124,7 +125,7 @@ class InventoryService {
         return { error: ERROR_MESSAGES.STOCK_NOT_FOUND, statusCode: HTTP.NOT_FOUND };
       }
 
-      // Actualizar la cantidad según el tipo de operación
+      // Validaciones antes de actualizar
       if (input_output === INPUT_OUTPUT.INPUT) {
         stock.quantity += quantity;
       } else if (input_output === INPUT_OUTPUT.OUTPUT) {
@@ -138,11 +139,15 @@ class InventoryService {
         return { error: ERROR_MESSAGES.INVALID_DATA, statusCode: HTTP.BAD_REQUEST };
       }
 
-      const updatedStock = await stock.save({ transaction });
-      await transaction.commit();
-      // Limpiar caché correspondiente
-      await cacheService.clearCache([`stock:${productId}`, 'allStocks']);
-      return { data: updatedStock, message: SUCCESS_MESSAGES.STOCK_UPDATED };
+      try {
+        const updatedStock = await stock.save({ transaction });
+        await transaction.commit();
+        await cacheService.clearCache([`stock:${productId}`, 'allStocks']);
+        return { data: updatedStock, message: SUCCESS_MESSAGES.STOCK_UPDATED };
+      } catch (saveError) {
+        await transaction.rollback();
+        throw saveError;
+      }
     } catch (error) {
       await transaction.rollback();
       console.error(ERROR_MESSAGES.UPDATE_STOCK, error);
