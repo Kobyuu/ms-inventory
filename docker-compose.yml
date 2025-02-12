@@ -1,13 +1,14 @@
 version: '3.8'
 
 services:
+  # PostgreSQL Database
   postgres:
     image: postgres:15
     container_name: ms-inventory_postgres
     environment:
+      POSTGRES_DB: postgres
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 1234
-      POSTGRES_DB: postgres  # Changed to default postgres database
     ports:
       - "7432:5432"
     volumes:
@@ -18,8 +19,8 @@ services:
       test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 5s
       retries: 5
-    restart: unless-stopped
 
+  # Redis
   redis:
     image: redis:7
     container_name: ms-inventory_redis
@@ -27,47 +28,34 @@ services:
       - "8379:6379"
     networks:
       - microservicios-red
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
 
+  # Node.js Application
   app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: ms-inventory_app
+    ports:
+      - "5002:4002"
     environment:
-      PORT: 4002
-      NODE_ENV: production
       DATABASE_URL: postgres://postgres:1234@postgres:5432/ms-inventory
       PRODUCT_SERVICE_URL: http://ms-catalog_app:4001/api/product
+      PORT: 4002
+      NODE_ENV: production
       REDIS_URL: redis://redis:6379
       CACHE_EXPIRY: 3600
       RETRY_ATTEMPTS: 3
       RETRY_DELAY: 1000
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      REDIS_RETRY_DELAY: 2000
-    ports:
-      - "5002:4002"
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - postgres
+      - redis
     volumes:
       - .:/app
-    command: sh -c "sleep 15 && npm run dev"
+    command: npm run dev
     networks:
       - microservicios-red
-    healthcheck:
-      test: ["CMD", "curl", "-f", ":4002/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
 volumes:
   postgres_data_inventory:
