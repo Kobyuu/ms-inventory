@@ -12,19 +12,28 @@ if (!process.env.DATABASE_URL) {
     throw new Error(ERROR_MESSAGES.DB_URL_NOT_DEFINED);
 }
 
+// Crear una instancia de Sequelize con la URL de la base de datos
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
   dialect: 'postgres',
-  models: [__dirname + '/../models/**/*.ts'], // Cargar todos los modelos
+  models: [__dirname + '/../models/**/*.ts'],
   logging: false,
   pool: {
-    max: 10,
-    min: 0,
-    acquire: 30000,
-    idle: 10000
+    max: 5,
+    min: 1,
+    idle: 600000, // 10 minutos en milisegundos
+    acquire: 30000, // 30 segundos en milisegundos
   },
-  retry: {
-    max: 3
-  }
+});
+
+// Hook para intentar reconectar automáticamente si la conexión se pierde
+sequelize.addHook('afterDisconnect', async () => {
+console.log('Conexión a la base de datos perdida. Intentando reconectar...');
+try {
+  await sequelize.authenticate();
+  console.log('Reconectado a la base de datos con éxito.');
+} catch (err) {
+  console.error('Error al intentar reconectar:', err);
+}
 });
 
 export async function connectDb(): Promise<void> {
