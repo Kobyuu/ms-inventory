@@ -1,9 +1,6 @@
 # Use Node.js base image
 FROM node:18
 
-# Add curl for testing (using apt-get instead of apk)
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-
 # Set working directory
 WORKDIR /app
 
