@@ -222,40 +222,62 @@ describe('InventoryService', () => {
 
   describe('addStock', () => {
     it('should add stock when product exists', async () => {
-      const mockDate = new Date();
+      const mockDate = new Date('2025-02-12T04:34:43.669Z');
       jest.spyOn(global, 'Date').mockImplementation(() => mockDate);
 
       const stock = {
         productId: 1,
         quantity: 10,
-        input_output: INPUT_OUTPUT.INPUT, // Always INPUT
-        transaction_date: mockDate
+        input_output: INPUT_OUTPUT.INPUT,
+        transaction_date: mockDate,
+        save: jest.fn().mockResolvedValue({
+          productId: 1,
+          quantity: 10,
+          input_output: INPUT_OUTPUT.INPUT,
+          transaction_date: mockDate
+        })
       };
-      const transaction = { commit: jest.fn(), rollback: jest.fn() };
+
+      const transaction = { 
+        commit: jest.fn().mockResolvedValue(undefined), 
+        rollback: jest.fn() 
+      };
+
       (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
       (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK });
       jest.spyOn(Stock, 'findOne').mockResolvedValue(null);
-      jest.spyOn(Stock, 'create').mockResolvedValue(stock as any);
+      jest.spyOn(Stock, 'create').mockResolvedValue({
+        ...stock,
+        save: jest.fn().mockResolvedValue(stock)
+      } as any);
 
       const result = await InventoryService.addStock(1, 10);
 
       expect(productService.getProductById).toHaveBeenCalledWith(1);
       expect(Stock.findOne).toHaveBeenCalledWith({
-        where: { productId: 1 }, // Remove input_output from query
+        where: { productId: 1 },
         transaction
       });
       expect(Stock.create).toHaveBeenCalledWith(
-        { 
-          productId: 1, 
-          quantity: 10, 
+        {
+          productId: 1,
+          quantity: 10,
           input_output: INPUT_OUTPUT.INPUT,
-          transaction_date: mockDate 
+          transaction_date: mockDate
         },
         { transaction }
       );
       expect(transaction.commit).toHaveBeenCalled();
       expect(cacheService.clearCache).toHaveBeenCalledWith(['stock:1', 'allStocks']);
-      expect(result).toEqual({ data: stock, message: SUCCESS_MESSAGES.STOCK_ADDED });
+      expect(result).toEqual({ 
+        data: expect.objectContaining({
+          productId: 1,
+          quantity: 10,
+          input_output: INPUT_OUTPUT.INPUT,
+          transaction_date: mockDate
+        }), 
+        message: SUCCESS_MESSAGES.STOCK_ADDED 
+      });
 
       jest.spyOn(global, 'Date').mockRestore();
     });
@@ -348,6 +370,117 @@ describe('InventoryService', () => {
       expect(result).toEqual({ 
         error: ERROR_MESSAGES.ADD_STOCK, 
         statusCode: HTTP.INTERNAL_SERVER_ERROR 
+      });
+    });
+  });
+
+  describe('Private Methods', () => {
+    describe('validateProduct', () => {
+      it('should validate product exists', async () => {
+        const transaction = { rollback: jest.fn() };
+        (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK });
+
+        const result = await (InventoryService as any).validateProduct(1, transaction);
+
+        expect(productService.getProductById).toHaveBeenCalledWith(1);
+        expect(result).toEqual({ statusCode: HTTP.OK });
+      });
+
+      it('should handle non-existent product', async () => {
+        const transaction = { rollback: jest.fn() };
+        (productService.getProductById as jest.Mock).mockResolvedValue({ 
+          statusCode: HTTP.NOT_FOUND 
+        });
+
+        const result = await (InventoryService as any).validateProduct(1, transaction);
+
+        expect(transaction.rollback).toHaveBeenCalled();
+        expect(result).toEqual({ 
+          error: ERROR_MESSAGES.PRODUCT_NOT_FOUND, 
+          statusCode: HTTP.NOT_FOUND 
+        });
+      });
+    });
+
+    describe('handleStockUpdate', () => {
+      it('should handle input stock update', async () => {
+        const stock = { quantity: 10 };
+        
+        const result = await (InventoryService as any).handleStockUpdate(
+          stock,
+          5,
+          INPUT_OUTPUT.INPUT
+        );
+
+        expect(stock.quantity).toBe(15);
+        expect(result).toEqual({ data: stock });
+      });
+
+      it('should handle valid output stock update', async () => {
+        const stock = { quantity: 10 };
+        
+        const result = await (InventoryService as any).handleStockUpdate(
+          stock,
+          5,
+          INPUT_OUTPUT.OUTPUT
+        );
+
+        expect(stock.quantity).toBe(5);
+        expect(result).toEqual({ data: stock });
+      });
+
+      it('should prevent insufficient stock output', async () => {
+        const stock = { quantity: 5 };
+        
+        const result = await (InventoryService as any).handleStockUpdate(
+          stock,
+          10,
+          INPUT_OUTPUT.OUTPUT
+        );
+
+        expect(result).toEqual({ 
+          error: ERROR_MESSAGES.INSUFFICIENT_STOCK, 
+          statusCode: HTTP.BAD_REQUEST 
+        });
+      });
+
+      it('should handle invalid input_output type', async () => {
+        const stock = { quantity: 10 };
+        
+        const result = await (InventoryService as any).handleStockUpdate(
+          stock,
+          5,
+          3
+        );
+
+        expect(result).toEqual({ 
+          error: ERROR_MESSAGES.INVALID_DATA, 
+          statusCode: HTTP.BAD_REQUEST 
+        });
+      });
+    });
+
+    describe('saveAndCommit', () => {
+      it('should save, commit and clear cache', async () => {
+        const mockStock = {
+          save: jest.fn().mockResolvedValue({ id: 1, quantity: 10 })
+        };
+        const transaction = { commit: jest.fn() };
+        
+        const result = await (InventoryService as any).saveAndCommit(
+          mockStock,
+          transaction,
+          1,
+          'Success message'
+        );
+
+        expect(mockStock.save).toHaveBeenCalledWith({ transaction });
+        expect(transaction.commit).toHaveBeenCalled();
+        expect(cacheService.clearCache).toHaveBeenCalledWith(['stock:1', 'allStocks']);
+        expect(result).toEqual({ 
+          data: { id: 1, quantity: 10 }, 
+          message: 'Success message' 
+        });
       });
     });
   });
