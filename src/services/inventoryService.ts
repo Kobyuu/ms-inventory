@@ -4,6 +4,7 @@ import { dbService } from '../config/db';
 import { cacheService } from './redisCacheService';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES, HTTP, INPUT_OUTPUT } from '../config/constants';
 import productService from './productService';
+import { ProductValidationMiddleware } from '../middleware/productValidation';
 
 class InventoryService {
   /**
@@ -160,22 +161,15 @@ class InventoryService {
   private async validateProduct(productId: number, transaction: any): Promise<StockResponse> {
     const productResponse = await productService.getProductById(productId);
     
-    if (productResponse.statusCode === HTTP.NOT_FOUND) {
+    const validationError = ProductValidationMiddleware.validateProduct(productResponse.data);
+    if (validationError) {
       await transaction.rollback();
-      return { 
-        error: ERROR_MESSAGES.PRODUCT_NOT_FOUND, 
-        statusCode: HTTP.NOT_FOUND 
+      return {
+        error: validationError.error,
+        statusCode: validationError.statusCode
       };
     }
-  
-    if (!productResponse.data?.active) {
-      await transaction.rollback();
-      return { 
-        error: ERROR_MESSAGES.PRODUCT_INACTIVE, // Cambiado aquí
-        statusCode: HTTP.NOT_FOUND 
-      };
-    }
-  
+
     return { statusCode: HTTP.OK };
   }
 
