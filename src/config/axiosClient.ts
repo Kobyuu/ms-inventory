@@ -1,24 +1,25 @@
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
 import { CONFIG } from './constants/enviroment';
-import { ERROR_MESSAGES, DYNAMIC_MESSAGES } from './constants';
+import { ERROR_MESSAGES, SUCCESS_MESSAGES, DYNAMIC_MESSAGES } from './constants';
 import { cacheService } from '../services/redisCacheService';
+import { HTTP } from './constants/httpStatus';
 
 const axiosClient = axios.create({
-  baseURL: CONFIG.PRODUCT_SERVICE_URL,
-  timeout: 5000,
+  baseURL: CONFIG.PRODUCT_SERVICE.URL,
+  timeout: CONFIG.PRODUCT_SERVICE.TIMEOUT,
 });
 
 // Configurar axios-retry
 axiosRetry(axiosClient, {
-  retries: CONFIG.RETRY_ATTEMPTS, // Número de reintentos
+  retries: CONFIG.RETRY.ATTEMPTS,
   retryDelay: (retryCount) => {
     console.log(DYNAMIC_MESSAGES.RETRY_ATTEMPT(retryCount));
-    return retryCount * CONFIG.RETRY_DELAY; // Retraso entre reintentos (en milisegundos)
+    return retryCount * CONFIG.RETRY.DELAY;
   },
   retryCondition: (error) => {
-    // Reintentar solo si es un error de red o un error 5xx
-    return axiosRetry.isNetworkOrIdempotentRequestError(error) || (error.response?.status ?? 0) >= 500;
+    return axiosRetry.isNetworkOrIdempotentRequestError(error) || 
+           (error.response?.status ?? 0) >= HTTP.INTERNAL_SERVER_ERROR;
   },
 });
 
@@ -31,8 +32,8 @@ axiosClient.interceptors.request.use(async (config) => {
     config.adapter = async () => {
       return {
         data: cachedData,
-        status: 200,
-        statusText: 'OK',
+        status: HTTP.OK,
+        statusText: SUCCESS_MESSAGES.OK,
         headers: {},
         config,
         request: {},

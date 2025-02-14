@@ -66,6 +66,7 @@ services:
       DB_POOL_MIN: 1
       DB_POOL_IDLE: 600000
       DB_POOL_ACQUIRE: 30000
+      PRODUCT_SERVICE_TIMEOUT: 5000
     depends_on:
       - postgres
       - redis

@@ -54,3 +54,8 @@ export interface CacheService {
 export interface DatabaseService {
   transaction<T>(): Promise<T>;
 }
+
+export interface RedisConfig {
+  host: string;
+  port: number;
+}

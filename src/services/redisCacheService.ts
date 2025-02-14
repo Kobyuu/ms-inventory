@@ -12,7 +12,7 @@ class RedisCacheService implements CacheService {
   }
 
   async setToCache(key: string, data: any): Promise<void> {
-    await redisClient.set(key, JSON.stringify(data), 'EX', CONFIG.CACHE_EXPIRY);
+    await redisClient.set(key, JSON.stringify(data), 'EX', CONFIG.REDIS.CACHE_EXPIRY);
   }
 
   async clearCache(keys: string[]): Promise<void> {

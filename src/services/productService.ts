@@ -16,7 +16,7 @@ class ProductService {
         return ProductValidationMiddleware.createSuccessResponse(cachedProduct as IProduct);
       }
 
-      const productResponse = await axiosClient.get(`${CONFIG.PRODUCT_SERVICE_URL}/${productId}`);
+      const productResponse = await axiosClient.get(`${CONFIG.PRODUCT_SERVICE.URL}/${productId}`);
       const product = productResponse.data;
       
       const validationError = ProductValidationMiddleware.validateProduct(product);
