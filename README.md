@@ -29,6 +29,11 @@ Microservicio para gestionar el inventario de productos con características ava
 PORT=4002
 
 # Database Configuration
+DB_POOL_MAX=5
+DB_POOL_MIN=1
+DB_POOL_IDLE=600000
+DB_POOL_ACQUIRE=30000
+
 # Docker environment
 DATABASE_URL=postgres://postgres:1234@postgres:5432/ms-inventory
 # Local testing
