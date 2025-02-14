@@ -40,7 +40,16 @@ export const validateProductId = (req: Request, res: Response, next: NextFunctio
 
 export const validateActiveProduct = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const productId = parseInt(req.params.productId || req.body.productId);
+    // Get productId from either params or body and validate it's a number
+    const productIdParam = req.params.productId || req.body.productId;
+    const productId = parseInt(productIdParam);
+    
+    if (isNaN(productId)) {
+      return res.status(HTTP.BAD_REQUEST).json({
+        error: ERROR_MESSAGES.INVALID_DATA
+      });
+    }
+
     const productResponse = await productService.getProductById(productId);
 
     if (productResponse.statusCode === HTTP.OK && productResponse.data.activate) {
@@ -52,6 +61,7 @@ export const validateActiveProduct = async (req: Request, res: Response, next: N
       error: ERROR_MESSAGES.PRODUCT_INACTIVE
     });
   } catch (error) {
+    console.error('Validation error:', error);
     return res.status(HTTP.INTERNAL_SERVER_ERROR).json({
       error: ERROR_MESSAGES.HTTP_REQUEST
     });
