@@ -18,7 +18,7 @@ export function validateEnv(): void {
         'CACHE_EXPIRY',
         'RETRY_ATTEMPTS',
         'RETRY_DELAY',
-        'NODE_ENV'  // Added NODE_ENV validation
+        'NODE_ENV'  
     ];
 
     requiredEnvVars.forEach((env) => {
