@@ -22,7 +22,7 @@ export class ProductValidationMiddleware {
       return this.createErrorResponse(ERROR_MESSAGES.PRODUCT_NOT_FOUND, HTTP.NOT_FOUND);
     }
 
-    if (!product.active) {
+    if (!product.activate) {
       return this.createErrorResponse(ERROR_MESSAGES.PRODUCT_INACTIVE, HTTP.NOT_FOUND);
     }
 

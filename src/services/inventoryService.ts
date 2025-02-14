@@ -161,7 +161,7 @@ class InventoryService {
   private async validateProduct(productId: number, transaction: any): Promise<StockResponse> {
     const productResponse = await productService.getProductById(productId);
     
-    if (productResponse.statusCode !== HTTP.OK || !productResponse.data.active) {
+    if (productResponse.statusCode !== HTTP.OK || !productResponse.data.activate) {
       await transaction.rollback();
       return {
         error: productResponse.error || ERROR_MESSAGES.PRODUCT_INACTIVE,
