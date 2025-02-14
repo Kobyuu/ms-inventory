@@ -21,11 +21,6 @@ export class ProductValidationMiddleware {
     if (!product) {
       return this.createErrorResponse(ERROR_MESSAGES.PRODUCT_NOT_FOUND, HTTP.NOT_FOUND);
     }
-
-    if (!product.activate) {
-      return this.createErrorResponse(ERROR_MESSAGES.PRODUCT_INACTIVE, HTTP.NOT_FOUND);
-    }
-
-    return this.createSuccessResponse(product); // Return success response instead of null
+    return this.createSuccessResponse(product);
   }
 }

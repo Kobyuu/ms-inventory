@@ -40,7 +40,6 @@ export const validateProductId = (req: Request, res: Response, next: NextFunctio
 
 export const validateActiveProduct = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Get productId from either params or body and validate it's a number
     const productIdParam = req.params.productId || req.body.productId;
     const productId = parseInt(productIdParam);
     
@@ -52,13 +51,13 @@ export const validateActiveProduct = async (req: Request, res: Response, next: N
 
     const productResponse = await productService.getProductById(productId);
 
-    if (productResponse.statusCode === HTTP.OK && productResponse.data.activate) {
+    if (productResponse.statusCode === HTTP.OK) {
       next();
       return;
     }
     
     return res.status(HTTP.NOT_FOUND).json({
-      error: ERROR_MESSAGES.PRODUCT_INACTIVE
+      error: ERROR_MESSAGES.PRODUCT_NOT_FOUND
     });
   } catch (error) {
     console.error('Validation error:', error);

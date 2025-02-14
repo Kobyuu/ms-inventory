@@ -34,10 +34,10 @@ class ProductService {
       }
 
       const product: IProduct = {
-        productId: productResponse.data.id,
-        name: productResponse.data.name,
-        price: productResponse.data.price,
-        activate: productResponse.data.activate
+        productId: productResponse.data.data.id,
+        name: productResponse.data.data.name,
+        price: productResponse.data.data.price,
+        activate: productResponse.data.data.activate
       };
 
       // Validar que el producto tenga todas las propiedades necesarias

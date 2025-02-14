@@ -160,7 +160,6 @@ class InventoryService {
   private async validateProduct(productId: number, transaction: any): Promise<StockResponse> {
     const productResponse = await productService.getProductById(productId);
     
-    // Validar si productResponse o productResponse.data son undefined
     if (!productResponse || !productResponse.data) {
         await transaction.rollback();
         return {
@@ -169,10 +168,10 @@ class InventoryService {
         };
     }
 
-    if (productResponse.statusCode !== HTTP.OK || !productResponse.data.activate) {
+    if (productResponse.statusCode !== HTTP.OK) {
         await transaction.rollback();
         return {
-            error: productResponse.error || ERROR_MESSAGES.PRODUCT_INACTIVE,
+            error: productResponse.error || ERROR_MESSAGES.PRODUCT_NOT_FOUND,
             statusCode: productResponse.statusCode || HTTP.NOT_FOUND
         };
     }
