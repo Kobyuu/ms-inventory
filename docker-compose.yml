@@ -61,7 +61,7 @@ services:
       RETRY_DELAY: 1000
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      # Nuevas variables de entorno para la base de datos
+      REDIS_RETRY_DELAY: 2000  
       DB_POOL_MAX: 5
       DB_POOL_MIN: 1
       DB_POOL_IDLE: 600000

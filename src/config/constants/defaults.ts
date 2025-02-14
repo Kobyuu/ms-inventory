@@ -1,5 +1,6 @@
 export const DEFAULTS = {
     PORT: 4002,
+    NODE_ENV: 'development', 
     DATABASE: {
         URL: 'postgres://postgres:1234@postgres:5432/ms-inventory',
         POOL: {

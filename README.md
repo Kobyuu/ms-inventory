@@ -27,6 +27,7 @@ Microservicio para gestionar el inventario de productos con características ava
 ```env
 # General Configuration
 PORT=4002
+NODE_ENV=development
 
 # Database Configuration
 DB_POOL_MAX=5

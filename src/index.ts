@@ -1,5 +1,5 @@
 import 'reflect-metadata'
-import { CONFIG } from './config/constants/enviroment';
+import { CONFIG } from './config/constants';
 import colors from 'colors';
 import server from './server';
 import { DYNAMIC_MESSAGES } from './config/constants';
