@@ -16,6 +16,7 @@ export const ERROR_MESSAGES = {
     REDIS_CONNECTION: 'Error en Redis',
     RATE_LIMIT_EXCEEDED: 'Demasiadas solicitudes desde esta IP, por favor intente de nuevo más tarde.',
     FETCH_ALL_STOCKS: 'Error al obtener todos los datos del inventario',
+    PRODUCT_INACTIVE: 'El producto está desactivado',
 };
 
 export const SUCCESS_MESSAGES = {

@@ -124,7 +124,7 @@ describe('InventoryService', () => {
       };
       const transaction = { commit: jest.fn(), rollback: jest.fn() };
       (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
-      (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK });
+      (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK, data: { active: true } });
       jest.spyOn(Stock, 'findOne').mockResolvedValue(stock as any);
 
       const result = await InventoryService.updateStock(1, 10, INPUT_OUTPUT.INPUT);
@@ -173,7 +173,7 @@ describe('InventoryService', () => {
     it('should return 404 if stock does not exist', async () => {
       const transaction = { commit: jest.fn(), rollback: jest.fn() };
       (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
-      (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK });
+      (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK, data: { active: true } });
       jest.spyOn(Stock, 'findOne').mockResolvedValue(null);
 
       const result = await InventoryService.updateStock(1, 10, INPUT_OUTPUT.INPUT);
@@ -186,7 +186,7 @@ describe('InventoryService', () => {
       const stock = { productId: 1, quantity: 5, save: jest.fn() };
       const transaction = { commit: jest.fn(), rollback: jest.fn() };
       (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
-      (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK });
+      (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK, data: { active: true } });
       jest.spyOn(Stock, 'findOne').mockResolvedValue(stock as any);
 
       const result = await InventoryService.updateStock(1, 10, INPUT_OUTPUT.OUTPUT);
@@ -199,7 +199,7 @@ describe('InventoryService', () => {
       const stock = { productId: 1, quantity: 10, save: jest.fn() };
       const transaction = { commit: jest.fn(), rollback: jest.fn() };
       (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
-      (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK });
+      (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK, data: { active: true } });
       jest.spyOn(Stock, 'findOne').mockResolvedValue(stock as any);
 
       const result = await InventoryService.updateStock(1, 10, 3);
@@ -244,7 +244,7 @@ describe('InventoryService', () => {
       };
 
       (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
-      (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK });
+      (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK, data: { active: true } });
       jest.spyOn(Stock, 'findOne').mockResolvedValue(null);
       jest.spyOn(Stock, 'create').mockResolvedValue({
         ...stock,
@@ -285,7 +285,7 @@ describe('InventoryService', () => {
     it('should reject invalid input_output value', async () => {
       const transaction = { commit: jest.fn(), rollback: jest.fn() };
       (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
-      (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK });
+      (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK, data: { active: true } });
 
       // Explicitly test with OUTPUT value
       const result = await InventoryService.addStock(1, 10, INPUT_OUTPUT.OUTPUT);
@@ -315,7 +315,7 @@ describe('InventoryService', () => {
       };
       const transaction = { commit: jest.fn(), rollback: jest.fn() };
       (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
-      (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK });
+      (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK, data: { active: true } });
       jest.spyOn(Stock, 'findOne').mockResolvedValue(existingStock as any);
 
       const result = await InventoryService.addStock(1, 10);
@@ -378,7 +378,7 @@ describe('InventoryService', () => {
     describe('validateProduct', () => {
       it('should validate product exists', async () => {
         const transaction = { rollback: jest.fn() };
-        (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK });
+        (productService.getProductById as jest.Mock).mockResolvedValue({ statusCode: HTTP.OK, data: { active: true } });
 
         const result = await (InventoryService as any).validateProduct(1, transaction);
 
@@ -390,6 +390,22 @@ describe('InventoryService', () => {
         const transaction = { rollback: jest.fn() };
         (productService.getProductById as jest.Mock).mockResolvedValue({ 
           statusCode: HTTP.NOT_FOUND 
+        });
+
+        const result = await (InventoryService as any).validateProduct(1, transaction);
+
+        expect(transaction.rollback).toHaveBeenCalled();
+        expect(result).toEqual({ 
+          error: ERROR_MESSAGES.PRODUCT_NOT_FOUND, 
+          statusCode: HTTP.NOT_FOUND 
+        });
+      });
+
+      it('should handle inactive product', async () => {
+        const transaction = { rollback: jest.fn() };
+        (productService.getProductById as jest.Mock).mockResolvedValue({ 
+          statusCode: HTTP.OK,
+          data: { active: false }
         });
 
         const result = await (InventoryService as any).validateProduct(1, transaction);
