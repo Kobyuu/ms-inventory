@@ -8,5 +8,11 @@ export const DEFAULTS = {
     RETRY_DELAY: 1000, // en milisegundos
     REDIS_HOST: 'redis',
     REDIS_PORT: 6379,
-    REDIS_RETRY_DELAY: 2000 // en milisegundos
+    REDIS_RETRY_DELAY: 2000, // en milisegundos
+    DB_POOL: {
+        MAX_CONNECTIONS: 5,
+        MIN_CONNECTIONS: 1,
+        IDLE_TIME: 600000, // 10 minutos en milisegundos
+        ACQUIRE_TIMEOUT: 30000 // 30 segundos en milisegundos
+    },
 };

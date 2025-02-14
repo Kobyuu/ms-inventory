@@ -2,6 +2,7 @@ import { Sequelize } from 'sequelize-typescript';
 import dotenv from 'dotenv';
 import colors from 'colors';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from './constants';
+import { CONFIG } from './constants/enviroment';
 import { DatabaseService } from '../types/types';
 
 dotenv.config();
@@ -18,21 +19,21 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
   models: [__dirname + '/../models/**/*.ts'],
   logging: false,
   pool: {
-    max: 5,
-    min: 1,
-    idle: 600000, // 10 minutos en milisegundos
-    acquire: 30000, // 30 segundos en milisegundos
+    max: CONFIG.DB_POOL.MAX_CONNECTIONS,
+    min: CONFIG.DB_POOL.MIN_CONNECTIONS,
+    idle: CONFIG.DB_POOL.IDLE_TIME,
+    acquire: CONFIG.DB_POOL.ACQUIRE_TIMEOUT,
   },
 });
 
 // Hook para intentar reconectar automáticamente si la conexión se pierde
 sequelize.addHook('afterDisconnect', async () => {
-console.log('Conexión a la base de datos perdida. Intentando reconectar...');
+console.log(ERROR_MESSAGES.DB_CONNECTION_LOST);
 try {
   await sequelize.authenticate();
-  console.log('Reconectado a la base de datos con éxito.');
+  console.log(SUCCESS_MESSAGES.DB_RECONNECTED);
 } catch (err) {
-  console.error('Error al intentar reconectar:', err);
+  console.error(ERROR_MESSAGES.DB_RECONNECTION_ERROR, err);
 }
 });
 
