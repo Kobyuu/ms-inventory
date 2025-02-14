@@ -11,21 +11,28 @@ class ProductService {
     try {
       const cachedProduct = await cacheService.getFromCache(cacheKey);
       if (cachedProduct) {
+        console.log('Cached Product:', cachedProduct); // Debug log
         const validationError = ProductValidationMiddleware.validateProduct(cachedProduct);
         if (validationError) return validationError;
         return ProductValidationMiddleware.createSuccessResponse(cachedProduct as IProduct);
       }
 
       const productResponse = await axiosClient.get(`${CONFIG.PRODUCT_SERVICE.URL}/${productId}`);
-      const product = productResponse.data;
+      const product: IProduct = productResponse.data;
+      
+      console.log('API Product Response:', product); // Debug log
       
       const validationError = ProductValidationMiddleware.validateProduct(product);
-      if (validationError) return validationError;
+      if (validationError) {
+        console.log('Validation Error:', validationError); // Debug log
+        return validationError;
+      }
 
       await cacheService.setToCache(cacheKey, product);
-      return ProductValidationMiddleware.createSuccessResponse(product as IProduct);
+      return ProductValidationMiddleware.createSuccessResponse(product);
 
     } catch (error: any) {
+      console.error('Service Error:', error); // Debug log
       if (error.response?.status === HTTP.NOT_FOUND) {
         return ProductValidationMiddleware.createErrorResponse(
           ERROR_MESSAGES.PRODUCT_NOT_FOUND, 
