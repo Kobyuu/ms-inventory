@@ -11,32 +11,45 @@ class ProductService {
     try {
       const cachedProduct = await cacheService.getFromCache(cacheKey);
       if (cachedProduct) {
-        console.log('Cached Product:', cachedProduct); // Debug log
+        // Validar que cachedProduct tenga todas las propiedades necesarias
+        if (!this.isValidProduct(cachedProduct)) {
+          return ProductValidationMiddleware.createErrorResponse(
+            ERROR_MESSAGES.INVALID_DATA,
+            HTTP.BAD_REQUEST
+          );
+        }
         const validationError = ProductValidationMiddleware.validateProduct(cachedProduct);
         if (validationError) return validationError;
         return ProductValidationMiddleware.createSuccessResponse(cachedProduct as IProduct);
       }
 
       const productResponse = await axiosClient.get(`${CONFIG.PRODUCT_SERVICE.URL}/${productId}`);
-      // Fix: Extract the product from the nested data property
+      
+      // Validar que la respuesta tenga datos
+      if (!productResponse.data) {
+        return ProductValidationMiddleware.createErrorResponse(
+          ERROR_MESSAGES.PRODUCT_NOT_FOUND,
+          HTTP.NOT_FOUND
+        );
+      }
+
       const product: IProduct = {
-        productId: productResponse.data.id,  // Map id to productId
+        productId: productResponse.data.id,
         name: productResponse.data.name,
         price: productResponse.data.price,
         activate: productResponse.data.activate
       };
-      
-      console.log('API Product Response:', product); // Debug log
-      
-      const validationError = ProductValidationMiddleware.validateProduct(product);
-      if (validationError) {
-        console.log('Validation Error:', validationError); // Debug log
-        return validationError;
+
+      // Validar que el producto tenga todas las propiedades necesarias
+      if (!this.isValidProduct(product)) {
+        return ProductValidationMiddleware.createErrorResponse(
+          ERROR_MESSAGES.INVALID_DATA,
+          HTTP.BAD_REQUEST
+        );
       }
 
       await cacheService.setToCache(cacheKey, product);
       return ProductValidationMiddleware.createSuccessResponse(product);
-
     } catch (error: any) {
       console.error('Service Error:', error); // Debug log
       if (error.response?.status === HTTP.NOT_FOUND) {
@@ -51,6 +64,16 @@ class ProductService {
         HTTP.INTERNAL_SERVER_ERROR
       );
     }
+  }
+
+  private isValidProduct(product: any): product is IProduct {
+    return (
+      product &&
+      typeof product.productId === 'number' &&
+      typeof product.name === 'string' &&
+      typeof product.price === 'number' &&
+      typeof product.activate === 'boolean'
+    );
   }
 }
 
