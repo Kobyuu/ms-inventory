@@ -18,7 +18,8 @@ class ProductService {
       }
 
       const productResponse = await axiosClient.get(`${CONFIG.PRODUCT_SERVICE.URL}/${productId}`);
-      const product: IProduct = productResponse.data;
+      // Fix: Extract the product from the nested data property
+      const product: IProduct = productResponse.data.data;
       
       console.log('API Product Response:', product); // Debug log
       
