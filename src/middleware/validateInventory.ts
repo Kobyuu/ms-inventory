@@ -43,14 +43,14 @@ export const validateActiveProduct = async (req: Request, res: Response, next: N
     const productId = parseInt(req.params.productId || req.body.productId);
     const productResponse = await productService.getProductById(productId);
 
-    const validationError = ProductValidationMiddleware.validateProduct(productResponse.data);
-    if (validationError) {
-      return res.status(validationError.statusCode).json({
-        error: validationError.error
-      });
+    if (productResponse.statusCode === HTTP.OK && productResponse.data.activate) {
+      next();
+      return;
     }
     
-    next();
+    return res.status(HTTP.NOT_FOUND).json({
+      error: ERROR_MESSAGES.PRODUCT_INACTIVE
+    });
   } catch (error) {
     return res.status(HTTP.INTERNAL_SERVER_ERROR).json({
       error: ERROR_MESSAGES.HTTP_REQUEST
