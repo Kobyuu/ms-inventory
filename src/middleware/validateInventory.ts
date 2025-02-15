@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { HTTP, ERROR_MESSAGES, INPUT_OUTPUT } from '../config/constants';
 import productService from '../services/productService';
-import { ProductValidationMiddleware } from './productValidation';
 
 // Remove duplicated validateProduct function
 

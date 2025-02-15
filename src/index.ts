@@ -1,8 +1,7 @@
 import 'reflect-metadata'
-import { CONFIG } from './config/constants';
+import { CONFIG, DYNAMIC_MESSAGES } from './config/constants';
 import colors from 'colors';
 import server from './server';
-import { DYNAMIC_MESSAGES } from './config/constants';
 import { connectDb } from './config/db';
 
 async function startServer() {

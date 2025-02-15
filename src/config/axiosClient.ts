@@ -1,9 +1,8 @@
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
 import { CONFIG } from './constants/enviroment';
-import { ERROR_MESSAGES, SUCCESS_MESSAGES, DYNAMIC_MESSAGES } from './constants';
+import { ERROR_MESSAGES, SUCCESS_MESSAGES, DYNAMIC_MESSAGES, HTTP } from './constants';
 import { cacheService } from '../services/redisCacheService';
-import { HTTP } from './constants/httpStatus';
 
 const axiosClient = axios.create({
   baseURL: CONFIG.PRODUCT_SERVICE.URL,
