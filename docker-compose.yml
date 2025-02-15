@@ -96,7 +96,7 @@ services:
     image: influxdb:1.8
     container_name: ms-inventory_influxdb
     ports:
-      - "8086:8086"
+      - "9086:8086"
     environment:
       - INFLUXDB_DB=k6
     volumes:
@@ -109,13 +109,14 @@ services:
     image: grafana/grafana:latest
     container_name: ms-inventory_grafana
     ports:
-      - "3000:3000"
+      - "2222:3000"  # Cambiado a puerto 2222 externo
     environment:
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=admin
     volumes:
-      - ./k6/grafana/dashboards:/var/lib/grafana/dashboards
-      - ./k6/grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
     networks:
       - microservicios-red
     depends_on:
@@ -124,6 +125,7 @@ services:
 volumes:
   postgres_data_inventory:
   influxdb_data:
+  grafana_data:  # Agregado volumen para Grafana
 
 networks:
   microservicios-red:
