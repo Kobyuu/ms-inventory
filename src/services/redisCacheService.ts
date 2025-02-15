@@ -1,5 +1,5 @@
 import redisClient from '../config/redisClient';
-import { CONFIG } from '../config/constants/enviroment';
+import { CONFIG } from '../config/constants';
 import { CacheService } from '../types/types';
 
 class RedisCacheService implements CacheService {
