@@ -191,43 +191,45 @@ class InventoryService {
     return await Stock.findOne(queryOptions);
   }
 
-  private async handleStockUpdate(
-    stock: Stock, 
-    quantity: number, 
-    input_output: number
-  ): Promise<StockResponse> {
+  private async handleStockUpdate(stock: any, quantity: number, input_output: number): Promise<StockResponse> {
+    if (quantity <= 0) {
+      return {
+        error: ERROR_MESSAGES.QUANTITY,
+        statusCode: HTTP.BAD_REQUEST
+      };
+    }
+  
     if (input_output === INPUT_OUTPUT.INPUT) {
+      if (stock.quantity + quantity > Number.MAX_SAFE_INTEGER) {
+        return {
+          error: ERROR_MESSAGES.INVALID_DATA,
+          statusCode: HTTP.BAD_REQUEST
+        };
+      }
       stock.quantity += quantity;
     } else if (input_output === INPUT_OUTPUT.OUTPUT) {
       if (stock.quantity < quantity) {
-        return { 
-          error: ERROR_MESSAGES.INSUFFICIENT_STOCK, 
-          statusCode: HTTP.BAD_REQUEST 
+        return {
+          error: ERROR_MESSAGES.INSUFFICIENT_STOCK,
+          statusCode: HTTP.BAD_REQUEST
         };
       }
       stock.quantity -= quantity;
     } else {
-      return { 
-        error: ERROR_MESSAGES.INVALID_DATA, 
-        statusCode: HTTP.BAD_REQUEST 
+      return {
+        error: ERROR_MESSAGES.INVALID_DATA,
+        statusCode: HTTP.BAD_REQUEST
       };
     }
+  
     return { data: stock };
   }
-
-  private async saveAndCommit(
-    stock: Stock, 
-    transaction: any, 
-    productId: number, 
-    successMessage: string
-  ): Promise<StockResponse> {
-    const updatedStock = await stock.save({ transaction });
+  
+  private async saveAndCommit(stock: any, transaction: any, productId: number, message: string): Promise<StockResponse> {
+    const savedStock = await stock.save({ transaction });
     await transaction.commit();
     await this.clearStockCache(productId);
-    return { 
-      data: updatedStock, 
-      message: successMessage 
-    };
+    return { data: savedStock, message };
   }
 
   private async clearStockCache(productId: number): Promise<void> {

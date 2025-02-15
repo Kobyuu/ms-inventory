@@ -35,9 +35,11 @@ const redisClient = process.env.NODE_ENV === 'test'
       }
     });
 
-redisClient.on('connect', () => {
-  console.log(SUCCESS_MESSAGES.REDIS_CONNECTION);
-});
+if (process.env.NODE_ENV !== 'test') {
+  redisClient.on('connect', () => {
+    console.log(SUCCESS_MESSAGES.REDIS_CONNECTION);
+  });
+}
 
 redisClient.on('error', (err) => {
   console.error(ERROR_MESSAGES.REDIS_CONNECTION, err);

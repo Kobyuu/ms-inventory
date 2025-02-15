@@ -5,8 +5,6 @@ export interface StockAttributes {
   quantity: number;
   input_output: number;
   transaction_date: Date;
-  createdAt?: Date;
-  updatedAt?: Date;
 }
 
 export type StockResponse = ApiResponse<StockAttributes | StockAttributes[]>;

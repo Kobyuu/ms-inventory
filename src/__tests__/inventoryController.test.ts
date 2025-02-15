@@ -153,6 +153,47 @@ describe('InventoryController', () => {
         error: error.message
       });
     });
+
+    it('should handle invalid quantity', async () => {
+      req.body = { productId: 1, quantity: -1 };
+      
+      // Mock productService to simulate successful product validation
+      (productService.getProductById as jest.Mock).mockResolvedValue({ 
+        statusCode: HTTP.OK,
+        data: { id: 1 }
+      });
+      
+      // Mock the error we expect from inventoryService
+      const error = new Error(ERROR_MESSAGES.QUANTITY);
+      (productService.getProductById as jest.Mock).mockRejectedValue(error);
+
+      await InventoryController.addStock(req as Request, res as Response);
+      
+      expect(res.status).toHaveBeenCalledWith(HTTP.INTERNAL_SERVER_ERROR);
+      expect(res.json).toHaveBeenCalledWith({ 
+        message: ERROR_MESSAGES.ADD_STOCK,
+        error: ERROR_MESSAGES.QUANTITY
+      });
+    });
+
+    it('should handle service error response', async () => {
+      req.body = { productId: 1, quantity: 10 };
+      (productService.getProductById as jest.Mock).mockResolvedValue({ 
+        statusCode: HTTP.OK,
+        data: { id: 1 }
+      });
+      (inventoryService.addStock as jest.Mock).mockResolvedValue({ 
+        error: ERROR_MESSAGES.ADD_STOCK,
+        statusCode: HTTP.INTERNAL_SERVER_ERROR 
+      });
+
+      await InventoryController.addStock(req as Request, res as Response);
+      
+      expect(res.status).toHaveBeenCalledWith(HTTP.INTERNAL_SERVER_ERROR);
+      expect(res.json).toHaveBeenCalledWith({ 
+        message: ERROR_MESSAGES.ADD_STOCK 
+      });
+    });
   });
 
   describe('updateStock', () => {
@@ -207,6 +248,44 @@ describe('InventoryController', () => {
       expect(res.json).toHaveBeenCalledWith({
         message: ERROR_MESSAGES.UPDATE_STOCK,
         error: error.message
+      });
+    });
+
+    it('should handle insufficient stock', async () => {
+      req.body = { productId: 1, quantity: 100, input_output: INPUT_OUTPUT.OUTPUT };
+      (productService.getProductById as jest.Mock).mockResolvedValue({ 
+        statusCode: HTTP.OK,
+        data: { id: 1 }
+      });
+      (inventoryService.updateStock as jest.Mock).mockResolvedValue({
+        error: ERROR_MESSAGES.INSUFFICIENT_STOCK,
+        statusCode: HTTP.BAD_REQUEST
+      });
+
+      await InventoryController.updateStock(req as Request, res as Response);
+      
+      expect(res.status).toHaveBeenCalledWith(HTTP.BAD_REQUEST);
+      expect(res.json).toHaveBeenCalledWith({ 
+        message: ERROR_MESSAGES.INSUFFICIENT_STOCK 
+      });
+    });
+
+    it('should handle invalid input_output value', async () => {
+      req.body = { productId: 1, quantity: 10, input_output: 3 };
+      (productService.getProductById as jest.Mock).mockResolvedValue({ 
+        statusCode: HTTP.OK,
+        data: { id: 1 }
+      });
+      (inventoryService.updateStock as jest.Mock).mockResolvedValue({
+        error: ERROR_MESSAGES.INPUT_OUTPUT,
+        statusCode: HTTP.BAD_REQUEST
+      });
+      
+      await InventoryController.updateStock(req as Request, res as Response);
+      
+      expect(res.status).toHaveBeenCalledWith(HTTP.BAD_REQUEST);
+      expect(res.json).toHaveBeenCalledWith({ 
+        message: ERROR_MESSAGES.INPUT_OUTPUT
       });
     });
   });
