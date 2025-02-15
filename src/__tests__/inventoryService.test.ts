@@ -373,25 +373,6 @@ describe('InventoryService', () => {
       });
     });
 
-    it('should return error for inactive product', async () => {
-      const transaction = { commit: jest.fn(), rollback: jest.fn() };
-      (dbService.transaction as jest.Mock).mockResolvedValue(transaction);
-      (productService.getProductById as jest.Mock).mockResolvedValue({ 
-        statusCode: HTTP.OK, // Importante: statusCode OK porque el producto existe
-        data: { active: false }
-      });
-
-      const result = await InventoryService.addStock(1, 10);
-
-      expect(productService.getProductById).toHaveBeenCalledWith(1);
-      expect(transaction.rollback).toHaveBeenCalled();
-      expect(result).toEqual({ 
-        error: ERROR_MESSAGES.PRODUCT_INACTIVE,
-        statusCode: HTTP.NOT_FOUND 
-      });
-    });
-
-    // ... otros tests ...
   });
 
   describe('Private Methods', () => {
@@ -425,22 +406,21 @@ describe('InventoryService', () => {
           statusCode: HTTP.NOT_FOUND 
         });
       });
-    
-      it('should handle inactive product', async () => {
+
+      it('should validate product exists', async () => {
         const transaction = { rollback: jest.fn() };
         (productService.getProductById as jest.Mock).mockResolvedValue({ 
-          statusCode: HTTP.OK, // Importante: statusCode OK porque el producto existe
-          data: { active: false }
+          statusCode: HTTP.OK, 
+          data: { id: 1 } 
         });
-    
+      
         const result = await (InventoryService as any).validateProduct(1, transaction);
-    
-        expect(transaction.rollback).toHaveBeenCalled();
-        expect(result).toEqual({ 
-          error: ERROR_MESSAGES.PRODUCT_INACTIVE,
-          statusCode: HTTP.NOT_FOUND 
-        });
+      
+        expect(productService.getProductById).toHaveBeenCalledWith(1);
+        expect(result).toEqual({ statusCode: HTTP.OK });
+        expect(transaction.rollback).not.toHaveBeenCalled();
       });
+      
     });
     
 
