@@ -12,6 +12,9 @@ build/
 *.d.ts
 *.d.ts.map
 
+# Excepciones para k6
+!k6/*.js
+
 # Configuraciones específicas del entorno local
 .env
 .env.local
