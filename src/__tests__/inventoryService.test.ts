@@ -5,7 +5,7 @@ import Stock from '../models/Inventory.model';
 import productService from '../services/productService';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES, HTTP, INPUT_OUTPUT } from '../config/constants';
 
-// Mock Sequelize and dbService
+// Mockea Sequelize y dbService para pruebas
 jest.mock('../config/db', () => {
   const mockTransaction = {
     commit: jest.fn().mockResolvedValue(undefined),
@@ -25,17 +25,19 @@ jest.mock('../config/db', () => {
   };
 });
 
-// Mock dependencies
+// Mockea las dependencias del servicio
 jest.mock('../services/redisCacheService');
 jest.mock('../models/Inventory.model');
 jest.mock('../services/productService');
 
 describe('InventoryService', () => {
+  // Limpia los mocks antes de cada prueba
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   describe('getAllStocks', () => {
+    // Prueba obtención de stocks desde caché
     it('should return cached stocks if available', async () => {
       const cachedStocks = [{ id: 1, productId: 1, quantity: 10 }];
       (cacheService.getFromCache as jest.Mock).mockResolvedValue(cachedStocks);
@@ -50,6 +52,7 @@ describe('InventoryService', () => {
       expect(Stock.findAll).not.toHaveBeenCalled();
     });
 
+    // Prueba obtención y cacheo de stocks desde base de datos
     it('should fetch and cache stocks if not in cache', async () => {
       const stocks = [{ id: 1, productId: 1, quantity: 10 }];
       (cacheService.getFromCache as jest.Mock).mockResolvedValue(null);
@@ -64,6 +67,7 @@ describe('InventoryService', () => {
       expect(cacheService.setToCache).toHaveBeenCalledWith('allStocks', stocks);
     });
 
+    // Prueba manejo de errores
     it('should handle errors', async () => {
       const error = new Error('Database error');
       (Stock.findAll as jest.Mock).mockRejectedValue(error);
@@ -81,6 +85,7 @@ describe('InventoryService', () => {
   describe('getStockByProductId', () => {
     const productId = 1;
 
+    // Prueba obtención de stock específico desde caché
     it('should return cached stock if available', async () => {
       const cachedStock = { id: 1, productId, quantity: 10 };
       (cacheService.getFromCache as jest.Mock).mockResolvedValue(cachedStock);
@@ -95,6 +100,7 @@ describe('InventoryService', () => {
       expect(Stock.findOne).not.toHaveBeenCalled();
     });
 
+    // Prueba cuando no existe el stock
     it('should return not found if stock does not exist', async () => {
       (cacheService.getFromCache as jest.Mock).mockResolvedValue(null);
       (Stock.findOne as jest.Mock).mockResolvedValue(null);
@@ -109,14 +115,14 @@ describe('InventoryService', () => {
   });
 
   describe('addStock', () => {
+    // Configuración inicial para pruebas de addStock
     const mockTransaction = { commit: jest.fn(), rollback: jest.fn() };
     const productId = 1;
     const quantity = 10;
 
     beforeEach(() => {
-      // Reset mocks
+      // Configura mocks para cada prueba
       jest.clearAllMocks();
-      // Set up dbService transaction mock
       (dbService.transaction as jest.Mock).mockResolvedValue(mockTransaction);
       (productService.getProductById as jest.Mock).mockResolvedValue({
         data: { id: productId },
@@ -124,6 +130,7 @@ describe('InventoryService', () => {
       });
     });
 
+    // Prueba agregar nuevo stock
     it('should add new stock if none exists', async () => {
       const newStock = { productId, quantity, save: jest.fn() };
       (Stock.findOne as jest.Mock).mockResolvedValue(null);
@@ -139,6 +146,7 @@ describe('InventoryService', () => {
       expect(mockTransaction.commit).toHaveBeenCalled();
     });
 
+    // Prueba actualizar stock existente
     it('should update existing stock', async () => {
       const mockSave = jest.fn().mockResolvedValue({ productId, quantity: 15 });
       const existingStock = { 
@@ -162,11 +170,13 @@ describe('InventoryService', () => {
   });
 
   describe('updateStock', () => {
+    // Configuración para pruebas de actualización
     const mockTransaction = { commit: jest.fn(), rollback: jest.fn() };
     const productId = 1;
     const quantity = 5;
 
     beforeEach(() => {
+      // Configura mocks para pruebas de actualización
       (dbService.transaction as jest.Mock).mockResolvedValue(mockTransaction);
       (productService.getProductById as jest.Mock).mockResolvedValue({
         data: { id: productId },
@@ -174,6 +184,7 @@ describe('InventoryService', () => {
       });
     });
 
+    // Prueba salida de stock con cantidad suficiente
     it('should handle output when sufficient stock exists', async () => {
       const mockSave = jest.fn().mockResolvedValue({ productId, quantity: 5 });
       const existingStock = {
@@ -195,6 +206,7 @@ describe('InventoryService', () => {
       expect(mockTransaction.commit).toHaveBeenCalled();
     });
 
+    // Prueba salida de stock con cantidad insuficiente
     it('should reject output when insufficient stock exists', async () => {
       const existingStock = {
         productId,
@@ -212,6 +224,7 @@ describe('InventoryService', () => {
       expect(mockTransaction.rollback).toHaveBeenCalled();
     });
 
+    // Prueba valor inválido de entrada/salida
     it('should handle invalid input_output value', async () => {
       const existingStock = {
         productId,

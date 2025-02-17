@@ -3,33 +3,34 @@ import MockAdapter from 'axios-mock-adapter';
 import axiosClient from '../config/axiosClient';
 import { cacheService } from '../services/redisCacheService';
 
+// Mockear el servicio de caché
 jest.mock('../services/redisCacheService');
 
 describe('axios-retry with cache', () => {
   let mock: MockAdapter;
 
-  // Antes de cada prueba, inicializa un mock para interceptar las solicitudes HTTP
+  // Configura el mock de Axios antes de cada prueba
   beforeEach(() => {
     mock = new MockAdapter(axiosClient);
     jest.clearAllMocks();
   });
 
-  // Después de cada prueba, resetea el mock para evitar interferencias entre pruebas
+  // Limpia el mock después de cada prueba
   afterEach(() => {
     mock.reset();
   });
 
+  // Prueba reintentos en errores de red
   it('should retry the request on network error', async () => {
-    // Simula un error de red en la petición GET a '/test'
     mock.onGet('/test').networkError();
 
     try {
       await axiosClient.get('/test');
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        // Verifica que el error lanzado es un "Network Error"
+        // Verifica mensaje de error de red
         expect(error.message).toBe('Network Error');
-        // Comprueba que se intentó hacer la solicitud más de una vez (reintentos)
+        // Confirma múltiples intentos
         expect(mock.history.get.length).toBeGreaterThan(1);
       } else {
         throw error;
@@ -37,8 +38,8 @@ describe('axios-retry with cache', () => {
     }
   });
 
+  // Prueba reintentos en errores del servidor (5xx)
   it('should retry the request on 5xx error', async () => {
-    // Simula una respuesta con error 500 (Internal Server Error)
     mock.onGet('/test').reply(500);
 
     try {
@@ -55,8 +56,8 @@ describe('axios-retry with cache', () => {
     }
   });
 
+  // Prueba sin reintentos en errores del cliente (4xx)
   it('should not retry the request on 4xx error', async () => {
-    // Simula una respuesta con error 400 (Bad Request)
     mock.onGet('/test').reply(400);
 
     try {
@@ -73,6 +74,7 @@ describe('axios-retry with cache', () => {
     }
   });
 
+  // Prueba almacenamiento en caché de respuestas exitosas
   it('should store response in cache on successful request', async () => {
     const responseData = { data: 'test data' };
     mock.onGet('/test').reply(200, responseData);
@@ -83,6 +85,7 @@ describe('axios-retry with cache', () => {
     expect(cacheService.setToCache).toHaveBeenCalledWith('cache:/test', responseData);
   });
 
+  // Prueba recuperación de datos desde caché
   it('should return cached response if available', async () => {
     const cachedData = { data: 'cached data' };
     (cacheService.getFromCache as jest.Mock).mockResolvedValue(cachedData);
@@ -94,6 +97,7 @@ describe('axios-retry with cache', () => {
     expect(response.data).toEqual(cachedData);
   });
 
+  // Prueba solicitud de red cuando no hay caché
   it('should make network request if cache is empty', async () => {
     const responseData = { data: 'test data' };
     (cacheService.getFromCache as jest.Mock).mockResolvedValue(null);

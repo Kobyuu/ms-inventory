@@ -14,7 +14,7 @@ router.get('/:productId',
 );
 
 router.post('/',
-  addStockValidations, // Usar validaciones específicas para addStock
+  addStockValidations, 
   commonValidations,
   InventoryController.addStock
 );

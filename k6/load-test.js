@@ -1,18 +1,22 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 
+// Configuración inicial de URL y headers
 const BASE_URL = 'http://ms-inventory_app:4002/api/inventory';
 
+// Headers para las peticiones HTTP 
 const headers = {
   'Content-Type': 'application/json',
   'Accept': 'application/json'
 };
 
+// Parámetros de configuración para las peticiones
 const params = {
   headers: headers,
   timeout: 10000  // 10s timeout
 };
 
+// Opciones de configuración del test de carga
 export const options = {
   setupTimeout: '30s',
   scenarios: {
@@ -31,10 +35,11 @@ export const options = {
   },
 };
 
+// Función de inicialización: verifica productos y crea stock inicial
 export function setup() {
   console.log('Setting up initial stock data...');
   
-  // First verify products exist
+  // Verificar si los productos existen en el catálogo
   for (let i = 1; i <= 3; i++) {
     const checkProduct = http.get(`http://ms-catalog_app:4001/api/product/${i}`, params);
     if (checkProduct.status !== 200) {
@@ -49,7 +54,7 @@ export function setup() {
     { productId: 3, quantity: 100, input_output: 1 }
   ];
 
-  // Initialize stock for each product
+  // Inicializar stock para los productos
   initialStocks.forEach(stock => {
     const response = http.post(
       `${BASE_URL}/`,
@@ -62,10 +67,11 @@ export function setup() {
     }
   });
 
-  // Give some time for data to be properly saved
+  // Dar tiempo para que los stocks se creen
   sleep(2);
 }
 
+// Función auxiliar para reintentar peticiones fallidas
 const retryRequest = (request, maxRetries = 3) => {
   let retries = 0;
   while (retries < maxRetries) {
@@ -79,6 +85,7 @@ const retryRequest = (request, maxRetries = 3) => {
   return request();
 };
 
+// Función principal del test: ejecuta operaciones CRUD en el inventario
 export default function () {
   const productId = Math.floor(Math.random() * 3) + 1;
   const quantity = Math.floor(Math.random() * 10) + 1;
@@ -100,7 +107,7 @@ export default function () {
     },
   });
 
-  sleep(Math.random() * 2 + 1); // Random sleep between 1-3 seconds
+  sleep(Math.random() * 2 + 1); // Random sleep entre 1-3 segundos
 
   // GET: obtener stock por ID
   const getStock = retryRequest(() => http.get(`${BASE_URL}/${productId}`, params));
@@ -108,7 +115,7 @@ export default function () {
     'GET stock by id status is 200 or 404': (r) => r.status === 200 || r.status === 404,
   });
 
-  sleep(Math.random() * 2 + 1); // Random sleep between 1-3 seconds
+  sleep(Math.random() * 2 + 1); // Random sleep entre 1-3 segundos
 
   // POST: agregar stock
   const addStockPayload = JSON.stringify({
@@ -145,7 +152,7 @@ export default function () {
     }
   });
 
-  sleep(Math.random() * 2 + 1); // Random sleep between 1-3 seconds
+  sleep(Math.random() * 2 + 1); // Random sleep entre 1-3 segundos
 
   // PUT: actualizar stock
   const updateStockPayload = JSON.stringify({
@@ -182,5 +189,5 @@ export default function () {
     }
   });
 
-  sleep(Math.random() * 2 + 1); // Random sleep between 1-3 seconds
+  sleep(Math.random() * 2 + 1); // Random sleep entre 1-3 segundos
 }

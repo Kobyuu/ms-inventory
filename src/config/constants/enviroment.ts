@@ -1,8 +1,10 @@
 import { validateEnv } from '../validateEnv';
 import { DEFAULTS } from './defaults';
 
+// Valida variables de entorno requeridas
 validateEnv();
 
+// Extrae variables de entorno
 const {
     DATABASE_URL,
     NODE_ENV,
@@ -21,9 +23,13 @@ const {
     DB_POOL_ACQUIRE,
 } = process.env;
 
+// Configuración global de la aplicación
 export const CONFIG = {
+    // Configuración básica del servidor
     PORT: parseInt(PORT ?? DEFAULTS.PORT.toString(), 10),
     NODE_ENV: NODE_ENV ?? 'development',
+
+    // Configuración de base de datos y pool de conexiones
     DATABASE: {
         URL: DATABASE_URL ?? DEFAULTS.DATABASE.URL,
         POOL: {
@@ -33,10 +39,14 @@ export const CONFIG = {
             ACQUIRE_TIMEOUT: parseInt(DB_POOL_ACQUIRE ?? DEFAULTS.DATABASE.POOL.ACQUIRE_TIMEOUT.toString(), 10)
         }
     },
+
+    // Configuración del servicio de productos
     PRODUCT_SERVICE: {
         URL: PRODUCT_SERVICE_URL ?? DEFAULTS.PRODUCT_SERVICE.URL,
         TIMEOUT: parseInt(PRODUCT_SERVICE_TIMEOUT ?? DEFAULTS.PRODUCT_SERVICE.TIMEOUT.toString(), 10)
     },
+
+    // Configuración de Redis y caché
     REDIS: {
         URL: REDIS_URL ?? DEFAULTS.REDIS.URL,
         HOST: REDIS_HOST ?? DEFAULTS.REDIS.HOST,
@@ -44,6 +54,8 @@ export const CONFIG = {
         RETRY_DELAY: parseInt(RETRY_DELAY ?? DEFAULTS.REDIS.RETRY_DELAY.toString(), 10),
         CACHE_EXPIRY: parseInt(CACHE_EXPIRY ?? DEFAULTS.REDIS.CACHE_EXPIRY.toString(), 10)
     },
+
+    // Configuración de reintentos
     RETRY: {
         ATTEMPTS: parseInt(RETRY_ATTEMPTS ?? DEFAULTS.RETRY.ATTEMPTS.toString(), 10),
         DELAY: parseInt(RETRY_DELAY ?? DEFAULTS.RETRY.DELAY.toString(), 10)

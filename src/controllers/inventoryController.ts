@@ -5,14 +5,17 @@ import inventoryService from '../services/inventoryService';
 import productService from '../services/productService';
 
 class InventoryController {
+  // Verifica existencia y estado del producto
   private static async verifyProduct(productId: number): Promise<ErrorResponse | null> {
     const productResponse = await productService.getProductById(productId);
+    // Valida si el producto no existe
     if (productResponse.statusCode === HTTP.NOT_FOUND) {
       return {
         status: HTTP.NOT_FOUND,
         json: { message: ERROR_MESSAGES.PRODUCT_NOT_FOUND }
       };
     }
+    // Valida otros errores del servicio
     if (productResponse.statusCode !== HTTP.OK) {
       return {
         status: productResponse.statusCode,
@@ -22,6 +25,7 @@ class InventoryController {
     return null;
   }
 
+  // Obtiene todos los registros de stock
   static async getAllStocks(req: Request, res: Response): Promise<Response> {
     try {
       const stocks = await inventoryService.getAllStocks();
@@ -34,10 +38,12 @@ class InventoryController {
     }
   }
 
+  // Obtiene el stock de un producto específico
   static async getStockByProductId(req: Request, res: Response): Promise<Response> {
     const { productId } = req.params;
     try {
       const stock = await inventoryService.getStockByProductId(Number(productId));
+      // Valida si existe stock para el producto
       if (!stock) {
         return res.status(HTTP.NOT_FOUND).json({
           message: ERROR_MESSAGES.STOCK_NOT_FOUND
@@ -52,16 +58,20 @@ class InventoryController {
     }
   }
 
+  // Agrega nuevo stock al inventario
   static async addStock(req: Request, res: Response): Promise<Response> {
     const { productId, quantity } = req.body;
     try {
+      // Verifica existencia del producto
       const productError = await InventoryController.verifyProduct(productId);
       if (productError) {
         return res.status(productError.status).json(productError.json);
       }
 
+      // Procesa la adición de stock
       const result = await inventoryService.addStock(productId, quantity, INPUT_OUTPUT.INPUT);
       
+      // Maneja errores en la operación
       if (result.error || !result.data) {
         return res.status(result.statusCode || HTTP.INTERNAL_SERVER_ERROR).json({
           message: result.error || ERROR_MESSAGES.ADD_STOCK
@@ -80,16 +90,20 @@ class InventoryController {
     }
   }
 
+  // Actualiza el stock existente
   static async updateStock(req: Request, res: Response): Promise<Response> {
     const { productId, quantity, input_output } = req.body;
     try {
+      // Verifica existencia del producto
       const productError = await InventoryController.verifyProduct(productId);
       if (productError) {
         return res.status(productError.status).json(productError.json);
       }
 
+      // Procesa la actualización de stock
       const result = await inventoryService.updateStock(productId, quantity, input_output);
       
+      // Maneja errores en la operación
       if (result.error || !result.data) {
         return res.status(result.statusCode || HTTP.INTERNAL_SERVER_ERROR).json({
           message: result.error || ERROR_MESSAGES.UPDATE_STOCK

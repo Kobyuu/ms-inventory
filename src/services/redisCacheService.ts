@@ -3,6 +3,7 @@ import { CONFIG } from '../config/constants';
 import { CacheService } from '../types/types';
 
 class RedisCacheService implements CacheService {
+  // Obtiene datos almacenados en caché por clave
   async getFromCache(key: string): Promise<any> {
     const cachedData = await redisClient.get(key);
     if (cachedData) {
@@ -11,10 +12,12 @@ class RedisCacheService implements CacheService {
     return null;
   }
 
+  // Almacena datos en caché con tiempo de expiración
   async setToCache(key: string, data: any): Promise<void> {
     await redisClient.set(key, JSON.stringify(data), 'EX', CONFIG.REDIS.CACHE_EXPIRY);
   }
 
+  // Elimina múltiples claves del caché
   async clearCache(keys: string[]): Promise<void> {
     for (const key of keys) {
       await redisClient.del(key);

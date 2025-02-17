@@ -8,7 +8,7 @@ const server = express();
 // Middleware para leer datos de formularios
 server.use(express.json());
 
-// Configuración de limitador de tasa
+// Configuración de rate limiter
 server.use(limiter);
 
 // Configuración de rutas

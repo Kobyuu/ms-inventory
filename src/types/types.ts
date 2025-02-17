@@ -1,4 +1,4 @@
-// Stock interfaces
+// Interfaces para el manejo de Stock
 export interface StockAttributes {
   id?: number; 
   productId: number; 
@@ -7,9 +7,10 @@ export interface StockAttributes {
   transaction_date: Date;
 }
 
+// Tipo para respuestas relacionadas con Stock
 export type StockResponse = ApiResponse<StockAttributes | StockAttributes[]>;
 
-// Response interfaces
+// Interfaces para respuestas API
 export interface ApiResponse<T> {
   data?: T;
   message?: string;
@@ -17,7 +18,7 @@ export interface ApiResponse<T> {
   statusCode?: number;
 }
 
-// Error Response interface
+// Interface para respuestas de error
 export interface ErrorResponse {
   status: number;
   json: {
@@ -25,7 +26,7 @@ export interface ErrorResponse {
   };
 }
 
-// Product interfaces
+// Interfaces para Productos
 export interface IProduct {
   productId: number; 
   name: string;
@@ -35,6 +36,7 @@ export interface IProduct {
   updatedAt?: Date;
 }
 
+// Interface para respuesta de Productos
 export interface IProductResponse {
   data: IProduct;
   message?: string;
@@ -42,17 +44,19 @@ export interface IProductResponse {
   statusCode: number;
 }
 
-// Service interfaces
+// Interfaces para Servicios
 export interface CacheService {
   getFromCache(key: string): Promise<any>;
   setToCache(key: string, data: any): Promise<void>;
   clearCache(keys: string[]): Promise<void>;
 }
 
+// Interface para operaciones de base de datos
 export interface DatabaseService {
   transaction<T>(): Promise<T>;
 }
 
+// Configuración de Redis
 export interface RedisConfig {
   host: string;
   port: number;

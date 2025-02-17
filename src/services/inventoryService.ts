@@ -6,9 +6,7 @@ import { ERROR_MESSAGES, SUCCESS_MESSAGES, HTTP, INPUT_OUTPUT } from '../config/
 import productService from './productService';
 
 class InventoryService {
-  /**
-   * Obtiene todos los stocks.
-   */
+  // Obtiene todos los registros de stock del inventario
   async getAllStocks(): Promise<StockResponse> {
     const cacheKey = 'allStocks';
     try {
@@ -28,9 +26,7 @@ class InventoryService {
     }
   }
 
-  /**
-   * Obtiene el stock de un producto específico.
-   */
+  // Obtiene el stock de un producto específico por su ID
   async getStockByProductId(productId: number): Promise<StockResponse> {
     const cacheKey = `stock:${productId}`;
     try {
@@ -53,10 +49,7 @@ class InventoryService {
     }
   }
 
-  /**
-   * Agrega stock para un producto.
-   * Se asume que el controlador ya verificó que el producto existe.
-   */
+  // Agrega nueva cantidad al stock de un producto
   async addStock(
     productId: number, 
     quantity: number, 
@@ -115,10 +108,7 @@ class InventoryService {
     }
   }
 
-  /**
-   * Actualiza el stock para un producto.
-   * Se asume que el controlador ya verificó que el producto existe.
-   */
+  // Actualiza la cantidad en stock de un producto
   async updateStock(
     productId: number, 
     quantity: number, 
@@ -157,6 +147,7 @@ class InventoryService {
     }
   }
 
+  // Valida la existencia y estado del producto en el catálogo antes de operar
   private async validateProduct(productId: number, transaction: any): Promise<StockResponse> {
     const productResponse = await productService.getProductById(productId);
     
@@ -168,6 +159,7 @@ class InventoryService {
         };
     }
 
+    // Verifica que el producto esté activo y disponible
     if (productResponse.statusCode !== HTTP.OK) {
         await transaction.rollback();
         return {
@@ -179,6 +171,7 @@ class InventoryService {
     return { statusCode: HTTP.OK };
   }
 
+  // Busca stock existente con opción de bloqueo para concurrencia
   private async findExistingStock(productId: number, transaction: any, inputOutputFilter?: number): Promise<Stock | null> {
     const queryOptions = {
       where: { 
@@ -186,12 +179,14 @@ class InventoryService {
         ...(inputOutputFilter && { input_output: inputOutputFilter })
       },
       transaction,
-      ...(inputOutputFilter && { lock: true })
+      ...(inputOutputFilter && { lock: true }) // Bloqueo para operaciones concurrentes
     };
     return await Stock.findOne(queryOptions);
   }
 
+  // Maneja la lógica de actualización del stock con validaciones de cantidad
   private async handleStockUpdate(stock: any, quantity: number, input_output: number): Promise<StockResponse> {
+    // Validación de cantidad positiva
     if (quantity <= 0) {
       return {
         error: ERROR_MESSAGES.QUANTITY,
@@ -200,6 +195,7 @@ class InventoryService {
     }
   
     if (input_output === INPUT_OUTPUT.INPUT) {
+      // Previene desbordamiento en entrada de stock
       if (stock.quantity + quantity > Number.MAX_SAFE_INTEGER) {
         return {
           error: ERROR_MESSAGES.INVALID_DATA,
@@ -208,6 +204,7 @@ class InventoryService {
       }
       stock.quantity += quantity;
     } else if (input_output === INPUT_OUTPUT.OUTPUT) {
+      // Verifica stock suficiente para salida
       if (stock.quantity < quantity) {
         return {
           error: ERROR_MESSAGES.INSUFFICIENT_STOCK,
@@ -225,13 +222,15 @@ class InventoryService {
     return { data: stock };
   }
   
+  // Guarda cambios, confirma transacción y actualiza caché
   private async saveAndCommit(stock: any, transaction: any, productId: number, message: string): Promise<StockResponse> {
     const savedStock = await stock.save({ transaction });
     await transaction.commit();
-    await this.clearStockCache(productId);
+    await this.clearStockCache(productId); // Invalida caché para mantener consistencia
     return { data: savedStock, message };
   }
 
+  // Limpia la caché relacionada con el stock
   private async clearStockCache(productId: number): Promise<void> {
     await cacheService.clearCache([`stock:${productId}`, 'allStocks']);
   }

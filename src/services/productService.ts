@@ -6,12 +6,13 @@ import { cacheService } from './redisCacheService';
 import { ProductValidationMiddleware } from '../middleware/productValidation';
 
 class ProductService {
+  // Obtiene un producto por ID desde caché o servicio externo
   async getProductById(productId: number): Promise<IProductResponse> {
     const cacheKey = `product:${productId}`;
     try {
       const cachedProduct = await cacheService.getFromCache(cacheKey);
       if (cachedProduct) {
-        // Validar que cachedProduct tenga todas las propiedades necesarias
+        // Validación del producto en caché
         if (!this.isValidProduct(cachedProduct)) {
           return ProductValidationMiddleware.createErrorResponse(
             ERROR_MESSAGES.INVALID_DATA,
@@ -23,9 +24,10 @@ class ProductService {
         return ProductValidationMiddleware.createSuccessResponse(cachedProduct as IProduct);
       }
 
+      // Obtención del producto desde el servicio externo
       const productResponse = await axiosClient.get(`${CONFIG.PRODUCT_SERVICE.URL}/${productId}`);
       
-      // Validar que la respuesta tenga datos
+      // Validación de respuesta
       if (!productResponse.data) {
         return ProductValidationMiddleware.createErrorResponse(
           ERROR_MESSAGES.PRODUCT_NOT_FOUND,
@@ -33,6 +35,7 @@ class ProductService {
         );
       }
 
+      // Mapeo de datos del producto
       const product: IProduct = {
         productId: productResponse.data.data.id,
         name: productResponse.data.data.name,
@@ -40,7 +43,7 @@ class ProductService {
         activate: productResponse.data.data.activate
       };
 
-      // Validar que el producto tenga todas las propiedades necesarias
+      // Validación del producto obtenido
       if (!this.isValidProduct(product)) {
         return ProductValidationMiddleware.createErrorResponse(
           ERROR_MESSAGES.INVALID_DATA,
@@ -51,7 +54,7 @@ class ProductService {
       await cacheService.setToCache(cacheKey, product);
       return ProductValidationMiddleware.createSuccessResponse(product);
     } catch (error: any) {
-      console.error('Service Error:', error); // Debug log
+      // Manejo de errores específicos
       if (error.response?.status === HTTP.NOT_FOUND) {
         return ProductValidationMiddleware.createErrorResponse(
           ERROR_MESSAGES.PRODUCT_NOT_FOUND, 
@@ -66,6 +69,7 @@ class ProductService {
     }
   }
 
+  // Valida que un objeto cumpla con la estructura de IProduct
   private isValidProduct(product: any): product is IProduct {
     return (
       product &&

@@ -4,6 +4,7 @@ import { CONFIG } from './constants/enviroment';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from './constants';
 import { RedisConfig } from '../types/types';
 
+// Analiza la URL de Redis y extrae la configuración
 const parseRedisUrl = (url: string): RedisConfig => {
   try {
     const redisUrl = new URL(url);
@@ -12,6 +13,7 @@ const parseRedisUrl = (url: string): RedisConfig => {
       port: parseInt(redisUrl.port || CONFIG.REDIS.PORT.toString(), 10)
     };
   } catch (error) {
+    // Si hay error, usa configuración por defecto
     console.error(ERROR_MESSAGES.REDIS_URL_PARSE, error);
     return {
       host: CONFIG.REDIS.HOST,
@@ -20,13 +22,16 @@ const parseRedisUrl = (url: string): RedisConfig => {
   }
 };
 
+// Obtiene la configuración de Redis desde la URL
 const redisConfig = parseRedisUrl(CONFIG.REDIS.URL);
 
+// Crea cliente Redis (mock para tests, real para producción)
 const redisClient = process.env.NODE_ENV === 'test' 
   ? new RedisMock() 
   : new Redis({
       host: redisConfig.host,
       port: redisConfig.port,
+      // Estrategia de reintentos exponencial con límite
       retryStrategy: (times: number): number => {
         return Math.min(
           times * CONFIG.RETRY.DELAY, 
@@ -35,12 +40,14 @@ const redisClient = process.env.NODE_ENV === 'test'
       }
     });
 
+// Manejador de conexión exitosa (excepto en tests)
 if (process.env.NODE_ENV !== 'test') {
   redisClient.on('connect', () => {
     console.log(SUCCESS_MESSAGES.REDIS_CONNECTION);
   });
 }
 
+// Manejador de errores de conexión
 redisClient.on('error', (err) => {
   console.error(ERROR_MESSAGES.REDIS_CONNECTION, err);
 });
