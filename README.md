@@ -1,4 +1,4 @@
-# ms-inventory
+# Microservicio de Inventario
 
 Microservicio de gestión de inventario implementado con Node.js, TypeScript, Express, Sequelize y Redis.
 
