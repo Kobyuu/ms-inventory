@@ -11,7 +11,10 @@ export const DEFAULTS = {
             MIN_CONNECTIONS: 1,         // Mínimo de conexiones mantenidas
             IDLE_TIME: 600000,          // 10 minutos de tiempo inactivo
             ACQUIRE_TIMEOUT: 30000      // 30 segundos para timeout de conexión
-        }
+        },
+        DIALECT: 'postgres',
+        MODELS_PATH: '/../models/**/*.ts',
+        LOGGING: false
     },
 
     // Configuración del servicio de productos

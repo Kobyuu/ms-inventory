@@ -34,6 +34,9 @@ DB_POOL_MAX=5
 DB_POOL_MIN=1
 DB_POOL_IDLE=600000
 DB_POOL_ACQUIRE=30000
+DIALECT=postgres
+MODELS_PATH=/../models/**/*.ts
+LOGGING=false
 
 # Entorno Docker
 DATABASE_URL=postgres://postgres:1234@postgres:5432/ms-inventory

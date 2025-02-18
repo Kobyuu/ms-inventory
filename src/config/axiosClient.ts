@@ -1,7 +1,6 @@
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
-import { CONFIG } from './constants/enviroment';
-import { ERROR_MESSAGES, SUCCESS_MESSAGES, DYNAMIC_MESSAGES, HTTP } from './constants';
+import { ERROR_MESSAGES, SUCCESS_MESSAGES, DYNAMIC_MESSAGES, HTTP, CONFIG} from './constants';
 import { cacheService } from '../services/redisCacheService';
 
 // Cliente HTTP con configuración base

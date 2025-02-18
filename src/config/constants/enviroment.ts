@@ -21,6 +21,9 @@ const {
     DB_POOL_MIN,
     DB_POOL_IDLE,
     DB_POOL_ACQUIRE,
+    DIALECT,
+    MODELS_PATH,
+    LOGGING,
 } = process.env;
 
 // Configuración global de la aplicación
@@ -32,11 +35,17 @@ export const CONFIG = {
     // Configuración de base de datos y pool de conexiones
     DATABASE: {
         URL: DATABASE_URL ?? DEFAULTS.DATABASE.URL,
+        DIALECT: DIALECT ?? DEFAULTS.DATABASE.DIALECT,
+        MODELS_PATH: MODELS_PATH ?? DEFAULTS.DATABASE.MODELS_PATH,
+        LOGGING: LOGGING ? LOGGING === 'true' : DEFAULTS.DATABASE.LOGGING,
         POOL: {
             MAX_CONNECTIONS: parseInt(DB_POOL_MAX ?? DEFAULTS.DATABASE.POOL.MAX_CONNECTIONS.toString(), 10),
             MIN_CONNECTIONS: parseInt(DB_POOL_MIN ?? DEFAULTS.DATABASE.POOL.MIN_CONNECTIONS.toString(), 10),
             IDLE_TIME: parseInt(DB_POOL_IDLE ?? DEFAULTS.DATABASE.POOL.IDLE_TIME.toString(), 10),
             ACQUIRE_TIMEOUT: parseInt(DB_POOL_ACQUIRE ?? DEFAULTS.DATABASE.POOL.ACQUIRE_TIMEOUT.toString(), 10)
+        },
+        HOOKS: {
+            AFTER_DISCONNECT: 'afterDisconnect'
         }
     },
 

@@ -67,6 +67,9 @@ services:
       DB_POOL_IDLE: 600000
       DB_POOL_ACQUIRE: 30000
       PRODUCT_SERVICE_TIMEOUT: 5000
+      DIALECT: postgres
+      MODELS_PATH: /../models/**/*.ts
+      LOGGING: "false"
     depends_on:
       - postgres
       - redis

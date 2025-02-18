@@ -1,7 +1,6 @@
 import { IProduct, IProductResponse } from '../types/types';
 import axiosClient from '../config/axiosClient';
-import { CONFIG } from '../config/constants/enviroment';
-import { HTTP, ERROR_MESSAGES } from '../config/constants';
+import { HTTP, ERROR_MESSAGES, CONFIG } from '../config/constants';
 import { cacheService } from './redisCacheService';
 import { ProductValidationMiddleware } from '../middleware/productValidation';
 

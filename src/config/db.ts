@@ -1,8 +1,7 @@
 import { Sequelize } from 'sequelize-typescript';
 import dotenv from 'dotenv';
 import colors from 'colors';
-import { ERROR_MESSAGES, SUCCESS_MESSAGES } from './constants';
-import { CONFIG } from './constants/enviroment';
+import { ERROR_MESSAGES, SUCCESS_MESSAGES, CONFIG } from './constants';
 import { DatabaseService } from '../types/types';
 
 // Carga variables de entorno

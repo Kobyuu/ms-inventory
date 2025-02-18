@@ -1,7 +1,6 @@
 import Redis from 'ioredis';
 import RedisMock from 'ioredis-mock';
-import { CONFIG } from './constants/enviroment';
-import { ERROR_MESSAGES, SUCCESS_MESSAGES } from './constants';
+import { ERROR_MESSAGES, SUCCESS_MESSAGES , CONFIG} from './constants';
 import { RedisConfig } from '../types/types';
 
 // Analiza la URL de Redis y extrae la configuración

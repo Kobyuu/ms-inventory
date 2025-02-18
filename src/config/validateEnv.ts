@@ -20,7 +20,10 @@ export function validateEnv(): void {
         'CACHE_EXPIRY',             // Tiempo de expiración de caché
         'RETRY_ATTEMPTS',           // Número de reintentos
         'RETRY_DELAY',              // Tiempo entre reintentos
-        'NODE_ENV'                  // Entorno de ejecución
+        'NODE_ENV',                 // Entorno de ejecución
+        'DIALECT',                  // Dialecto de la base de datos
+        'MODELS_PATH',              // Ruta de los modelos
+        'LOGGING'                   // Estado del logging de la base de datos
     ];
 
     // Verifica cada variable y lanza error si falta alguna
